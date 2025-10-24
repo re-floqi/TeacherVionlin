@@ -1,0 +1,32 @@
+{
+  "name": "lesson-tracker",
+  "version": "1.0.0",
+  "description": "A React application for tracking lessons, including features for recording lesson times, durations, charges, and displaying them in a calendar format.",
+  "main": "src/main.tsx",
+  "scripts": {
+    "start": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "react-router-dom": "^6.0.0",
+    "supabase-js": "^2.0.0",
+    "date-fns": "^2.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^4.0.0",
+    "vite": "^2.0.0",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0"
+  },
+  "keywords": [
+    "react",
+    "lessons",
+    "calendar",
+    "tracking"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
