@@ -1,0 +1,27 @@
+{
+  "name": "teacher-vionlin",
+  "version": "1.0.0",
+  "description": "Εφαρμογή διαχείρισης μαθημάτων βιολιού με ημερολόγιο",
+  "main": "supabaseService.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "violin",
+    "teacher",
+    "lessons",
+    "calendar",
+    "supabase",
+    "react-native"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/re-floqi/TeacherVionlin.git"
+  }
+}
