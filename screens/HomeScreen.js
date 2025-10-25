@@ -10,8 +10,10 @@ import {
 } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { getLessonsByDateRange, signOut } from '../supabaseService';
+import { useTheme } from '../ThemeContext';
 
 export default function HomeScreen({ navigation, onLogout }) {
+  const { theme, isDarkMode, toggleTheme } = useTheme();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [lessons, setLessons] = useState([]);
   const [markedDates, setMarkedDates] = useState({});
@@ -116,8 +118,8 @@ export default function HomeScreen({ navigation, onLogout }) {
   const selectedDateLessons = getLessonsForSelectedDate();
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <View style={[styles.header, { backgroundColor: theme.colors.headerBackground }]}>
         <View style={styles.headerButtons}>
           <TouchableOpacity
             style={styles.headerButton}
@@ -136,6 +138,18 @@ export default function HomeScreen({ navigation, onLogout }) {
             onPress={() => navigation.navigate('PaymentStats')}
           >
             <Text style={styles.headerButtonText}>💰 Στατ.</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => navigation.navigate('Settings')}
+          >
+            <Text style={styles.headerButtonText}>⚙️</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={toggleTheme}
+          >
+            <Text style={styles.headerButtonText}>{isDarkMode ? '☀️' : '🌙'}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.headerButton, styles.logoutButton]}
@@ -157,16 +171,23 @@ export default function HomeScreen({ navigation, onLogout }) {
           onDayPress={handleDateSelect}
           markedDates={markedDates}
           theme={{
-            selectedDayBackgroundColor: '#5e72e4',
-            todayTextColor: '#5e72e4',
-            arrowColor: '#5e72e4',
-            dotColor: '#5e72e4',
+            backgroundColor: theme.colors.card,
+            calendarBackground: theme.colors.card,
+            textSectionTitleColor: theme.colors.text,
+            selectedDayBackgroundColor: theme.colors.primary,
+            selectedDayTextColor: '#fff',
+            todayTextColor: theme.colors.primary,
+            dayTextColor: theme.colors.text,
+            textDisabledColor: theme.colors.disabled,
+            arrowColor: theme.colors.primary,
+            dotColor: theme.colors.primary,
+            monthTextColor: theme.colors.text,
           }}
         />
 
         <View style={styles.lessonsContainer}>
           <View style={styles.lessonsDayHeader}>
-            <Text style={styles.lessonsDayHeaderText}>
+            <Text style={[styles.lessonsDayHeaderText, { color: theme.colors.text }]}>
               Μαθήματα {new Date(selectedDate).toLocaleDateString('el-GR', {
                 weekday: 'long',
                 year: 'numeric',
@@ -175,7 +196,7 @@ export default function HomeScreen({ navigation, onLogout }) {
               })}
             </Text>
             <TouchableOpacity
-              style={styles.addButton}
+              style={[styles.addButton, { backgroundColor: theme.colors.primary }]}
               onPress={() => navigation.navigate('AddEditLesson', { selectedDate })}
             >
               <Text style={styles.addButtonText}>+ Νέο</Text>
@@ -184,30 +205,40 @@ export default function HomeScreen({ navigation, onLogout }) {
 
           {selectedDateLessons.length === 0 ? (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>Δεν υπάρχουν μαθήματα αυτή την ημέρα</Text>
+              <Text style={[styles.emptyStateText, { color: theme.colors.textTertiary }]}>
+                Δεν υπάρχουν μαθήματα αυτή την ημέρα
+              </Text>
             </View>
           ) : (
             selectedDateLessons.map((lesson) => (
               <TouchableOpacity
                 key={lesson.lesson_id}
-                style={styles.lessonCard}
+                style={[styles.lessonCard, { backgroundColor: theme.colors.card }]}
                 onPress={() => navigation.navigate('AddEditLesson', { lesson })}
               >
                 <View style={styles.lessonHeader}>
-                  <Text style={styles.lessonTime}>{formatTime(lesson.imera_ora_enarksis)}</Text>
+                  <Text style={[styles.lessonTime, { color: theme.colors.text }]}>
+                    {formatTime(lesson.imera_ora_enarksis)}
+                  </Text>
                   <View style={[styles.paymentBadge, { backgroundColor: getPaymentStatusColor(lesson.katastasi_pliromis) }]}>
                     <Text style={styles.paymentBadgeText}>{getPaymentStatusText(lesson.katastasi_pliromis)}</Text>
                   </View>
                 </View>
-                <Text style={styles.lessonStudent}>
+                <Text style={[styles.lessonStudent, { color: theme.colors.textSecondary }]}>
                   {lesson.students?.onoma_mathiti} {lesson.students?.epitheto_mathiti}
                 </Text>
                 <View style={styles.lessonDetails}>
-                  <Text style={styles.lessonDetail}>⏱️ {lesson.diarkeia_lepta} λεπτά</Text>
-                  <Text style={styles.lessonDetail}>💶 {lesson.timi}€</Text>
+                  <Text style={[styles.lessonDetail, { color: theme.colors.textSecondary }]}>
+                    ⏱️ {lesson.diarkeia_lepta} λεπτά
+                  </Text>
+                  <Text style={[styles.lessonDetail, { color: theme.colors.textSecondary }]}>
+                    💶 {lesson.timi}€
+                  </Text>
                 </View>
                 {lesson.simiwseis_mathimatos && (
-                  <Text style={styles.lessonNotes}>{lesson.simiwseis_mathimatos}</Text>
+                  <Text style={[styles.lessonNotes, { color: theme.colors.textTertiary }]}>
+                    {lesson.simiwseis_mathimatos}
+                  </Text>
                 )}
               </TouchableOpacity>
             ))

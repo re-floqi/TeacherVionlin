@@ -12,13 +12,18 @@ import AddEditStudentScreen from './screens/AddEditStudentScreen';
 import AddEditLessonScreen from './screens/AddEditLessonScreen';
 import RecurringLessonsScreen from './screens/RecurringLessonsScreen';
 import PaymentStatsScreen from './screens/PaymentStatsScreen';
+import SettingsScreen from './screens/SettingsScreen';
 
 // Import auth service
 import { getCurrentSession } from './supabaseService';
 
+// Import theme
+import { ThemeProvider, useTheme } from './ThemeContext';
+
 const Stack = createNativeStackNavigator();
 
-export default function App() {
+function AppContent() {
+  const { theme, isLoading: themeLoading } = useTheme();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -32,24 +37,24 @@ export default function App() {
     setIsLoading(false);
   };
 
-  if (isLoading) {
+  if (isLoading || themeLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#5e72e4" />
+      <View style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }
 
   return (
     <>
-      <StatusBar style="auto" />
+      <StatusBar style={theme.mode === 'dark' ? 'light' : 'auto'} />
       <NavigationContainer>
         <Stack.Navigator
           screenOptions={{
             headerStyle: {
-              backgroundColor: '#5e72e4',
+              backgroundColor: theme.colors.headerBackground,
             },
-            headerTintColor: '#fff',
+            headerTintColor: theme.colors.headerText,
             headerTitleStyle: {
               fontWeight: 'bold',
             },
@@ -99,6 +104,11 @@ export default function App() {
                 component={PaymentStatsScreen}
                 options={{ title: 'Στατιστικά Πληρωμών' }}
               />
+              <Stack.Screen 
+                name="Settings" 
+                component={SettingsScreen}
+                options={{ title: 'Ρυθμίσεις' }}
+              />
             </>
           )}
         </Stack.Navigator>
@@ -107,11 +117,18 @@ export default function App() {
   );
 }
 
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
+  );
+}
+
 const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
   },
 });
