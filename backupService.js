@@ -122,13 +122,10 @@ export const restoreFromBackup = async () => {
 
 /**
  * Export database schema as SQL (informational)
- * This creates a copy of the database schema for reference
+ * This displays information about the database schema
  */
 export const exportDatabaseSchema = async () => {
   try {
-    // Read the schema file from the project
-    const schemaPath = FileSystem.documentDirectory + '../database_schema.sql';
-    
     Alert.alert(
       'Σχήμα Βάσης Δεδομένων',
       'Το σχήμα της βάσης δεδομένων βρίσκεται στο αρχείο database_schema.sql του έργου. Μπορείτε να το χρησιμοποιήσετε για να αναδημιουργήσετε τη βάση δεδομένων στο Supabase.',

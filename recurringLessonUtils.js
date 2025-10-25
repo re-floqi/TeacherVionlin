@@ -68,7 +68,7 @@ const generateLessonsFromRule = async (recurringLesson, startDate, endDate, exis
     ? new Date(recurringLesson.lixi_epanallipsis)
     : end;
 
-  let currentDate = new Date(Math.max(start, ruleStart));
+  let currentDate = new Date(Math.max(start.getTime(), ruleStart.getTime()));
 
   // Find the first occurrence of the target day of week
   while (currentDate.getDay() !== recurringLesson.imera_evdomadas && currentDate <= end) {
@@ -78,7 +78,7 @@ const generateLessonsFromRule = async (recurringLesson, startDate, endDate, exis
   const lessonsToCreate = [];
 
   // Generate lessons for each occurrence
-  while (currentDate <= Math.min(end, ruleEnd)) {
+  while (currentDate.getTime() <= Math.min(end.getTime(), ruleEnd.getTime())) {
     const [hours, minutes] = recurringLesson.ora_enarksis.split(':');
     const lessonDateTime = new Date(currentDate);
     lessonDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
