@@ -1,0 +1,4 @@
+# Placeholder for favicon (Web)
+# Replace this with an actual favicon.png
+# Recommended size: 48x48 PNG
+# This file is referenced in app.json
