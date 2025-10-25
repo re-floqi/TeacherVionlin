@@ -10,7 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { addStudent, updateStudent } from '../supabaseService';
+import { addStudent, updateStudent, deleteStudent } from '../supabaseService';
 
 export default function AddEditStudentScreen({ route, navigation }) {
   const { student } = route.params || {};
@@ -77,6 +77,32 @@ export default function AddEditStudentScreen({ route, navigation }) {
     } else {
       Alert.alert('Σφάλμα', result.error || 'Κάτι πήγε στραβά');
     }
+  };
+
+  const handleDelete = () => {
+    Alert.alert(
+      'Διαγραφή Μαθητή',
+      'Είστε σίγουροι ότι θέλετε να διαγράψετε αυτόν τον μαθητή; Αυτό θα διαγράψει και όλα τα μαθήματα του.',
+      [
+        { text: 'Άκυρο', style: 'cancel' },
+        {
+          text: 'Διαγραφή',
+          style: 'destructive',
+          onPress: async () => {
+            const result = await deleteStudent(student.student_id);
+            if (result.success) {
+              Alert.alert(
+                'Επιτυχία',
+                'Ο μαθητής διαγράφηκε',
+                [{ text: 'OK', onPress: () => navigation.goBack() }]
+              );
+            } else {
+              Alert.alert('Σφάλμα', 'Δεν ήταν δυνατή η διαγραφή του μαθητή');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const updateField = (field, value) => {
@@ -199,6 +225,12 @@ export default function AddEditStudentScreen({ route, navigation }) {
               {isEditing ? 'Ενημέρωση Μαθητή' : 'Προσθήκη Μαθητή'}
             </Text>
           </TouchableOpacity>
+
+          {isEditing && (
+            <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+              <Text style={styles.deleteButtonText}>Διαγραφή Μαθητή</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -248,9 +280,21 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 24,
-    marginBottom: 32,
   },
   saveButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  deleteButton: {
+    backgroundColor: '#dc3545',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 12,
+    marginBottom: 32,
+  },
+  deleteButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',

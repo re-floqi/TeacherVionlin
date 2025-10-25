@@ -9,15 +9,17 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Switch,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { addLesson, updateLesson, deleteLesson, getStudents } from '../supabaseService';
+import { addLesson, updateLesson, deleteLesson, getStudents, addRecurringLesson } from '../supabaseService';
 
 export default function AddEditLessonScreen({ route, navigation }) {
   const { lesson, selectedDate } = route.params || {};
   const isEditing = !!lesson;
 
   const [students, setStudents] = useState([]);
+  const [isRecurring, setIsRecurring] = useState(false);
   const [formData, setFormData] = useState({
     student_id: '',
     date: selectedDate || new Date().toISOString().split('T')[0],
@@ -98,12 +100,30 @@ export default function AddEditLessonScreen({ route, navigation }) {
       result = await updateLesson(lesson.lesson_id, dataToSave);
     } else {
       result = await addLesson(dataToSave);
+      
+      // If recurring is enabled and lesson was created successfully, create recurring rule
+      if (result.success && isRecurring) {
+        const recurringData = {
+          student_id: parseInt(formData.student_id),
+          imera_evdomadas: dateTime.getDay(), // Day of week (0-6)
+          ora_enarksis: formData.time,
+          diarkeia_lepta: parseInt(formData.diarkeia_lepta),
+          timi: parseFloat(formData.timi),
+          enarxi_epanallipsis: formData.date,
+          lixi_epanallipsis: null, // No end date
+        };
+        
+        const recurringResult = await addRecurringLesson(recurringData);
+        if (!recurringResult.success) {
+          Alert.alert('Προειδοποίηση', 'Το μάθημα δημιουργήθηκε αλλά ο κανόνας επανάληψης απέτυχε');
+        }
+      }
     }
 
     if (result.success) {
       Alert.alert(
         'Επιτυχία',
-        isEditing ? 'Το μάθημα ενημερώθηκε' : 'Το μάθημα προστέθηκε',
+        isEditing ? 'Το μάθημα ενημερώθηκε' : isRecurring ? 'Το μάθημα και ο κανόνας επανάληψης προστέθηκαν' : 'Το μάθημα προστέθηκε',
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
     } else {
@@ -219,6 +239,18 @@ export default function AddEditLessonScreen({ route, navigation }) {
             numberOfLines={4}
           />
 
+          {!isEditing && (
+            <View style={styles.switchContainer}>
+              <Text style={styles.label}>Επαναλαμβανόμενο μάθημα (κάθε εβδομάδα)</Text>
+              <Switch
+                value={isRecurring}
+                onValueChange={setIsRecurring}
+                trackColor={{ false: '#ccc', true: '#5e72e4' }}
+                thumbColor={isRecurring ? '#fff' : '#f4f3f4'}
+              />
+            </View>
+          )}
+
           <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
             <Text style={styles.saveButtonText}>
               {isEditing ? 'Ενημέρωση Μαθήματος' : 'Προσθήκη Μαθήματος'}
@@ -274,6 +306,17 @@ const styles = StyleSheet.create({
   },
   picker: {
     height: 50,
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
   },
   saveButton: {
     backgroundColor: '#5e72e4',
