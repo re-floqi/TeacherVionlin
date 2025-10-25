@@ -83,6 +83,32 @@ CREATE POLICY "Enable all for authenticated users" ON recurring_lessons
     USING (true)
     WITH CHECK (true);
 
+-- Student Progress Tracking table (Παρακολούθηση προόδου μαθητή)
+CREATE TABLE student_progress (
+    progress_id SERIAL PRIMARY KEY,
+    student_id INTEGER NOT NULL REFERENCES students(student_id) ON DELETE CASCADE,
+    imera_kataxorisis TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    perigrafi TEXT NOT NULL,
+    skill_level INTEGER CHECK (skill_level BETWEEN 1 AND 5),
+    kommati_mousikis VARCHAR(255),
+    simiwseis TEXT,
+    created_by VARCHAR(100)
+);
+
+-- Create index for better query performance
+CREATE INDEX idx_student_progress_student_id ON student_progress(student_id);
+CREATE INDEX idx_student_progress_date ON student_progress(imera_kataxorisis);
+
+-- Enable Row Level Security (RLS) for student_progress
+ALTER TABLE student_progress ENABLE ROW LEVEL SECURITY;
+
+-- Create policy for student_progress
+CREATE POLICY "Enable all for authenticated users" ON student_progress
+    FOR ALL
+    TO authenticated
+    USING (true)
+    WITH CHECK (true);
+
 -- Sample data (optional - for testing)
 -- INSERT INTO students (onoma_mathiti, epitheto_mathiti, etos_gennisis, onoma_gonea, epitheto_gonea, kinhto_tilefono, email, megethos_violiou, default_diarkeia, default_timi)
 -- VALUES 

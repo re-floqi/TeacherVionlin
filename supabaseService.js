@@ -570,6 +570,95 @@ export const generateLessonsFromRecurring = async (recurringId, startDate, endDa
   }
 };
 
+/**
+ * Student Progress Tracking Functions
+ */
+
+/**
+ * Get progress entries for a specific student
+ * @param {number} studentId - Student ID
+ * @returns {Promise<Array>} Array of progress entries
+ */
+export const getStudentProgress = async (studentId) => {
+  try {
+    const { data, error } = await supabase
+      .from('student_progress')
+      .select('*')
+      .eq('student_id', studentId)
+      .order('imera_kataxorisis', { ascending: false });
+
+    if (error) throw error;
+    return { success: true, data };
+  } catch (error) {
+    console.error('Get student progress error:', error.message);
+    return { success: false, error: error.message, data: [] };
+  }
+};
+
+/**
+ * Add a progress entry for a student
+ * @param {Object} progressData - Progress entry information
+ * @returns {Promise<Object>} Created progress entry
+ */
+export const addStudentProgress = async (progressData) => {
+  try {
+    const { data, error } = await supabase
+      .from('student_progress')
+      .insert([progressData])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { success: true, data };
+  } catch (error) {
+    console.error('Add student progress error:', error.message);
+    return { success: false, error: error.message, data: null };
+  }
+};
+
+/**
+ * Update a progress entry
+ * @param {number} progressId - Progress entry ID
+ * @param {Object} progressData - Updated progress information
+ * @returns {Promise<Object>} Updated progress entry
+ */
+export const updateStudentProgress = async (progressId, progressData) => {
+  try {
+    const { data, error } = await supabase
+      .from('student_progress')
+      .update(progressData)
+      .eq('progress_id', progressId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { success: true, data };
+  } catch (error) {
+    console.error('Update student progress error:', error.message);
+    return { success: false, error: error.message, data: null };
+  }
+};
+
+/**
+ * Delete a progress entry
+ * @param {number} progressId - Progress entry ID
+ * @returns {Promise<Object>} Success status
+ */
+export const deleteStudentProgress = async (progressId) => {
+  try {
+    const { error } = await supabase
+      .from('student_progress')
+      .delete()
+      .eq('progress_id', progressId);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error('Delete student progress error:', error.message);
+    return { success: false, error: error.message };
+  }
+};
+
 export default {
   supabase,
   signIn,
@@ -593,4 +682,8 @@ export default {
   deleteRecurringLesson,
   getPaymentStatistics,
   generateLessonsFromRecurring,
+  getStudentProgress,
+  addStudentProgress,
+  updateStudentProgress,
+  deleteStudentProgress,
 };
