@@ -9,17 +9,26 @@ import {
 } from 'react-native';
 import { getPaymentStatistics, getLessonsByDateRange, updateLessonPayment } from '../supabaseService';
 
+// Οθόνη που εμφανίζει στατιστικά πληρωμών και λίστα μαθημάτων για την επιλεγμένη περίοδο.
+// Παρέχει επιλογές αλλαγής κατάστασης πληρωμής για κάθε μάθημα.
 export default function PaymentStatsScreen({ navigation }) {
-  const [period, setPeriod] = useState('month'); // 'month', 'year', 'all'
+  // Επιλογή περιόδου προβολής: 'month'|'year'|'all'
+  const [period, setPeriod] = useState('month');
+  // Για την περίοδο 'month' κρατάμε το τρέχον μήνα που εμφανίζεται (Date)
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  // Αποτελέσματα στατιστικών από το backend
   const [stats, setStats] = useState(null);
+  // Λίστα μαθημάτων για την επιλεγμένη περίοδο
   const [lessons, setLessons] = useState([]);
+  // Σημαία φόρτωσης για εμφάνιση loader
   const [loading, setLoading] = useState(false);
 
+  // Φόρτωση στατιστικών/μαθημάτων όταν αλλάζει περίοδος ή μήνας
   useEffect(() => {
     loadStats();
   }, [period, currentMonth]);
 
+  // Υπολογίζει τα ISO range (start/end) με βάση την επιλεγμένη περίοδο
   const getDateRange = () => {
     const referenceDate = period === 'month' ? currentMonth : new Date();
     let startDate;
@@ -27,15 +36,18 @@ export default function PaymentStatsScreen({ navigation }) {
 
     switch (period) {
       case 'month':
+        // Από την πρώτη μέρα του μήνα μέχρι το τελευταίο δευτερόλεπτο της τελευταίας μέρας
         startDate = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 1);
         endDate = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 1, 0, 23, 59, 59);
         break;
       case 'year':
+        // Από την αρχή του έτους μέχρι το τέλος του έτους
         startDate = new Date(referenceDate.getFullYear(), 0, 1);
         endDate = new Date(referenceDate.getFullYear(), 11, 31, 23, 59, 59);
         break;
       case 'all':
-        startDate = new Date(2000, 0, 1); // Far past date
+        // Πολύ παλιά ημερομηνία για να συμπεριλάβει όλα τα δεδομένα
+        startDate = new Date(2000, 0, 1);
         endDate = new Date();
         break;
       default:
@@ -49,9 +61,12 @@ export default function PaymentStatsScreen({ navigation }) {
     };
   };
 
+  // Κύρια συνάρτηση που τραβάει στατιστικά και μαθήματα από το backend
   const loadStats = async () => {
     setLoading(true);
     const { startDate, endDate } = getDateRange();
+
+    // Κλήση προς supabaseService για στατιστικά και μαθήματα
     const statsResult = await getPaymentStatistics(startDate, endDate);
     const lessonsResult = await getLessonsByDateRange(startDate, endDate);
     
@@ -68,11 +83,12 @@ export default function PaymentStatsScreen({ navigation }) {
     setLoading(false);
   };
 
+  // Αλλαγή κατάστασης πληρωμής για επιλεγμένο μάθημα (ειδοποιεί backend και ανανεώνει)
   const handlePaymentStatusChange = async (lessonId, newStatus) => {
     const result = await updateLessonPayment(lessonId, newStatus);
     
     if (result.success) {
-      // Reload stats and lessons
+      // Επαναφόρτωση δεδομένων μετά την επιτυχή αλλαγή
       await loadStats();
       Alert.alert('Επιτυχία', 'Η κατάσταση πληρωμής ενημερώθηκε');
     } else {
@@ -80,6 +96,7 @@ export default function PaymentStatsScreen({ navigation }) {
     }
   };
 
+  // Μορφοποίηση ημερομηνίας+ώρας για εμφάνιση (el-GR)
   const formatDateTime = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('el-GR', {
@@ -91,6 +108,7 @@ export default function PaymentStatsScreen({ navigation }) {
     });
   };
 
+  // Επιστρέφει χρώμα βάσει της κατάστασης πληρωμής
   const getPaymentStatusColor = (status) => {
     switch (status) {
       case 'paid': return '#28a745';
@@ -100,6 +118,7 @@ export default function PaymentStatsScreen({ navigation }) {
     }
   };
 
+  // Ανθρώπινο κείμενο για κάθε κατάσταση πληρωμής
   const getPaymentStatusText = (status) => {
     switch (status) {
       case 'paid': return 'Πληρώθηκε';
@@ -110,6 +129,7 @@ export default function PaymentStatsScreen({ navigation }) {
     setLoading(false);
   };
 
+  // Ετικέτα περιόδου για εμφάνιση στον χρήστη
   const getPeriodLabel = () => {
     if (period === 'month') {
       return currentMonth.toLocaleDateString('el-GR', { year: 'numeric', month: 'long' });
@@ -121,18 +141,21 @@ export default function PaymentStatsScreen({ navigation }) {
     }
   };
 
+  // Κίνηση σε προηγούμενο μήνα (για περίοδο 'month')
   const goToPreviousMonth = () => {
     const newDate = new Date(currentMonth);
     newDate.setMonth(newDate.getMonth() - 1);
     setCurrentMonth(newDate);
   };
 
+  // Κίνηση σε επόμενο μήνα (αν δεν υπερβαίνει σήμερα)
   const goToNextMonth = () => {
     const newDate = new Date(currentMonth);
     newDate.setMonth(newDate.getMonth() + 1);
     setCurrentMonth(newDate);
   };
 
+  // Έλεγχος αν μπορεί να πάμε στον επόμενο μήνα (δεν ξεπερνάει σήμερα)
   const canGoNext = () => {
     const today = new Date();
     const nextMonth = new Date(currentMonth);
@@ -140,6 +163,7 @@ export default function PaymentStatsScreen({ navigation }) {
     return nextMonth <= today;
   };
 
+  // Απλό loader state πριν φορτώσουν τα stats
   if (loading || !stats) {
     return (
       <View style={styles.container}>
@@ -148,6 +172,7 @@ export default function PaymentStatsScreen({ navigation }) {
     );
   }
 
+  // UI: προβολή περιόδου, βασικών στατιστικών, ποσοστών και λίστας μαθημάτων
   return (
     <ScrollView style={styles.container}>
       <View style={styles.periodSelector}>

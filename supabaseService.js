@@ -1,21 +1,18 @@
 /**
  * Supabase Service Layer
- * 
- * This file contains all the database interaction functions for the Violin Teacher app.
- * It provides an abstraction layer between the React Native components and Supabase.
- * 
- * Setup Instructions:
- * 1. Install Supabase: npm install @supabase/supabase-js
- * 2. Create a .env file with your Supabase credentials:
- *    SUPABASE_URL=your_supabase_project_url
- *    SUPABASE_ANON_KEY=your_supabase_anon_key
- * 3. Run the database_schema.sql in your Supabase SQL editor
+ *
+ * Περιλαμβάνει όλες τις συναρτήσεις που επικοινωνούν με το Supabase
+ * και χρησιμεύουν ως ενιαίο επίπεδο πρόσβασης στις βάσεις δεδομένων
+ * για την εφαρμογή "Διαχείριση Μαθημάτων".
+ *
+ * Σημείωση: οι συναρτήσεις επιστρέφουν αντικείμενα της μορφής
+ * { success: boolean, data?, error? } για εύκολο χειρισμό από τα components.
  */
 
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase client
-// Make sure to set these environment variables in your .env file
+// Οι μεταβλητές περιβάλλοντος πρέπει να οριστούν στο .env του έργου
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
 
@@ -27,9 +24,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 /**
  * Sign in with email and password
- * @param {string} email - User's email
- * @param {string} password - User's password
- * @returns {Promise<Object>} User session data or error
+ * - Καλείται από την οθόνη σύνδεσης για να λάβει session/user.
+ * - Επιστρέφει { success: true, data } ή { success: false, error }.
  */
 export const signIn = async (email, password) => {
   try {
@@ -41,6 +37,7 @@ export const signIn = async (email, password) => {
     if (error) throw error;
     return { success: true, data };
   } catch (error) {
+    // Καταγράφουμε το σφάλμα και επιστρέφουμε χρήσιμο μήνυμα
     console.error('Sign in error:', error.message);
     return { success: false, error: error.message };
   }
@@ -48,7 +45,7 @@ export const signIn = async (email, password) => {
 
 /**
  * Sign out the current user
- * @returns {Promise<Object>} Success status
+ * - Καλείται κατά το logout για να τερματίσει το session.
  */
 export const signOut = async () => {
   try {
@@ -63,7 +60,7 @@ export const signOut = async () => {
 
 /**
  * Get the current user session
- * @returns {Promise<Object>} Current session or null
+ * - Επιστρέφει το session ή null σε περίπτωση σφάλματος.
  */
 export const getCurrentSession = async () => {
   try {
@@ -78,11 +75,14 @@ export const getCurrentSession = async () => {
 
 /**
  * Student Management Functions
+ *
+ * Οι συναρτήσεις χειρίζονται CRUD για τον πίνακα students.
+ * Επιστρέφουν πάντα αντικείμενα με πεδίο success για απλό έλεγχο.
  */
 
 /**
  * Get all students
- * @returns {Promise<Array>} Array of all students
+ * - Επιστρέφει λίστα μαθητών ταξινομημένη κατά επώνυμο.
  */
 export const getStudents = async () => {
   try {
@@ -101,8 +101,7 @@ export const getStudents = async () => {
 
 /**
  * Get a single student by ID
- * @param {number} studentId - Student ID
- * @returns {Promise<Object>} Student data
+ * - Χρήσιμο όταν χρειαζόμαστε λεπτομέρειες ενός μαθητή.
  */
 export const getStudentById = async (studentId) => {
   try {
@@ -122,8 +121,7 @@ export const getStudentById = async (studentId) => {
 
 /**
  * Add a new student
- * @param {Object} studentData - Student information
- * @returns {Promise<Object>} Created student data
+ * - Εισάγει νέο record στον πίνακα students και επιστρέφει το δημιουργημένο αντικείμενο.
  */
 export const addStudent = async (studentData) => {
   try {
@@ -143,9 +141,7 @@ export const addStudent = async (studentData) => {
 
 /**
  * Update an existing student
- * @param {number} studentId - Student ID
- * @param {Object} studentData - Updated student information
- * @returns {Promise<Object>} Updated student data
+ * - Ενημερώνει τα πεδία του μαθητή με το δοθέν studentId.
  */
 export const updateStudent = async (studentId, studentData) => {
   try {
@@ -166,8 +162,8 @@ export const updateStudent = async (studentId, studentData) => {
 
 /**
  * Delete a student
- * @param {number} studentId - Student ID
- * @returns {Promise<Object>} Success status
+ * - Διαγράφει τον μαθητή. Προσοχή: η σχετική λογική cascade (μαθήματα κλπ.)
+ *   πρέπει να διαχειρίζεται από το DB ή την εφαρμογή ανάλογα με το σχέδιο.
  */
 export const deleteStudent = async (studentId) => {
   try {
@@ -186,13 +182,13 @@ export const deleteStudent = async (studentId) => {
 
 /**
  * Lesson Management Functions
+ *
+ * CRUD και queries για τα μαθήματα, με embedded relation προς students.
  */
 
 /**
  * Get lessons by date range
- * @param {string} startDate - Start date (ISO format)
- * @param {string} endDate - End date (ISO format)
- * @returns {Promise<Array>} Array of lessons with student info
+ * - Επιστρέφει μαθήματα εντός του διάστηματος μαζί με βασικά στοιχεία μαθητή.
  */
 export const getLessonsByDateRange = async (startDate, endDate) => {
   try {
@@ -221,8 +217,7 @@ export const getLessonsByDateRange = async (startDate, endDate) => {
 
 /**
  * Get all lessons for a specific student
- * @param {number} studentId - Student ID
- * @returns {Promise<Array>} Array of lessons
+ * - Χρήσιμο για προφίλ μαθητή ή ιστορικό.
  */
 export const getLessonsByStudent = async (studentId) => {
   try {
@@ -242,8 +237,7 @@ export const getLessonsByStudent = async (studentId) => {
 
 /**
  * Add a new lesson
- * @param {Object} lessonData - Lesson information
- * @returns {Promise<Object>} Created lesson data
+ * - Δημιουργεί ένα νέο μάθημα. Το lessonData πρέπει να περιέχει student_id και imera_ora_enarksis.
  */
 export const addLesson = async (lessonData) => {
   try {
@@ -263,9 +257,7 @@ export const addLesson = async (lessonData) => {
 
 /**
  * Update a lesson
- * @param {number} lessonId - Lesson ID
- * @param {Object} lessonData - Updated lesson information
- * @returns {Promise<Object>} Updated lesson data
+ * - Ενημερώνει πεδία συγκεκριμένου μαθήματος.
  */
 export const updateLesson = async (lessonId, lessonData) => {
   try {
@@ -286,9 +278,7 @@ export const updateLesson = async (lessonId, lessonData) => {
 
 /**
  * Update lesson payment status
- * @param {number} lessonId - Lesson ID
- * @param {string} newStatus - New payment status ('pending', 'paid', or 'cancelled')
- * @returns {Promise<Object>} Updated lesson data
+ * - Αλλάζει την κατάσταση πληρωμής (paid/pending/cancelled).
  */
 export const updateLessonPayment = async (lessonId, newStatus) => {
   try {
@@ -309,8 +299,7 @@ export const updateLessonPayment = async (lessonId, newStatus) => {
 
 /**
  * Delete a lesson
- * @param {number} lessonId - Lesson ID
- * @returns {Promise<Object>} Success status
+ * - Διαγράφει το lesson με το δοθέν lessonId.
  */
 export const deleteLesson = async (lessonId) => {
   try {
@@ -329,11 +318,12 @@ export const deleteLesson = async (lessonId) => {
 
 /**
  * Recurring Lesson Management Functions
+ * - CRUD για τους κανόνες επανάληψης (recurring_lessons)
  */
 
 /**
  * Get all recurring lessons
- * @returns {Promise<Array>} Array of recurring lessons with student info
+ * - Επιστρέφει κανόνες με relation στο students για εμφάνιση ονομάτων.
  */
 export const getRecurringLessons = async () => {
   try {
@@ -360,8 +350,6 @@ export const getRecurringLessons = async () => {
 
 /**
  * Get recurring lessons for a specific student
- * @param {number} studentId - Student ID
- * @returns {Promise<Array>} Array of recurring lessons
  */
 export const getRecurringLessonsByStudent = async (studentId) => {
   try {
@@ -381,8 +369,6 @@ export const getRecurringLessonsByStudent = async (studentId) => {
 
 /**
  * Add a new recurring lesson rule
- * @param {Object} recurringData - Recurring lesson information
- * @returns {Promise<Object>} Created recurring lesson data
  */
 export const addRecurringLesson = async (recurringData) => {
   try {
@@ -402,9 +388,6 @@ export const addRecurringLesson = async (recurringData) => {
 
 /**
  * Update a recurring lesson rule
- * @param {number} recurringId - Recurring lesson ID
- * @param {Object} recurringData - Updated recurring lesson information
- * @returns {Promise<Object>} Updated recurring lesson data
  */
 export const updateRecurringLesson = async (recurringId, recurringData) => {
   try {
@@ -425,8 +408,6 @@ export const updateRecurringLesson = async (recurringId, recurringData) => {
 
 /**
  * Delete a recurring lesson rule
- * @param {number} recurringId - Recurring lesson ID
- * @returns {Promise<Object>} Success status
  */
 export const deleteRecurringLesson = async (recurringId) => {
   try {
@@ -449,9 +430,7 @@ export const deleteRecurringLesson = async (recurringId) => {
 
 /**
  * Get payment statistics for a date range
- * @param {string} startDate - Start date (ISO format)
- * @param {string} endDate - End date (ISO format)
- * @returns {Promise<Object>} Payment statistics
+ * - Υπολογίζει συνολικά μαθήματα, ποσά ανά κατάσταση και αθροίσματα.
  */
 export const getPaymentStatistics = async (startDate, endDate) => {
   try {
@@ -463,7 +442,7 @@ export const getPaymentStatistics = async (startDate, endDate) => {
 
     if (error) throw error;
 
-    // Calculate statistics
+    // Initialize stats
     const stats = {
       total: 0,
       paid: 0,
@@ -503,11 +482,8 @@ export const getPaymentStatistics = async (startDate, endDate) => {
 
 /**
  * Generate individual lessons from recurring rules for a date range
- * This is a helper function to create actual lesson entries from recurring rules
- * @param {number} recurringId - Recurring lesson ID
- * @param {string} startDate - Start date (ISO format)
- * @param {string} endDate - End date (ISO format)
- * @returns {Promise<Object>} Created lessons
+ * - Βοηθητική συνάρτηση που χρησιμοποιείται για μαζική δημιουργία μαθημάτων
+ *   από έναν κανόνα επανάληψης. Εισάγει όλα τα παραγόμενα lessons με ένα insert.
  */
 export const generateLessonsFromRecurring = async (recurringId, startDate, endDate) => {
   try {
@@ -528,7 +504,7 @@ export const generateLessonsFromRecurring = async (recurringId, startDate, endDa
     const ruleEnd = recurringLesson.lixi_epanallipsis ? new Date(recurringLesson.lixi_epanallipsis) : end;
 
     let currentDate = new Date(Math.max(start, ruleStart));
-    
+
     // Find the first occurrence of the target day of week
     while (currentDate.getDay() !== recurringLesson.imera_evdomadas && currentDate <= end) {
       currentDate.setDate(currentDate.getDate() + 1);
@@ -572,12 +548,11 @@ export const generateLessonsFromRecurring = async (recurringId, startDate, endDa
 
 /**
  * Student Progress Tracking Functions
+ * - CRUD για την παρακολούθηση προόδου μαθητών.
  */
 
 /**
  * Get progress entries for a specific student
- * @param {number} studentId - Student ID
- * @returns {Promise<Array>} Array of progress entries
  */
 export const getStudentProgress = async (studentId) => {
   try {
@@ -597,8 +572,6 @@ export const getStudentProgress = async (studentId) => {
 
 /**
  * Add a progress entry for a student
- * @param {Object} progressData - Progress entry information
- * @returns {Promise<Object>} Created progress entry
  */
 export const addStudentProgress = async (progressData) => {
   try {
@@ -618,9 +591,6 @@ export const addStudentProgress = async (progressData) => {
 
 /**
  * Update a progress entry
- * @param {number} progressId - Progress entry ID
- * @param {Object} progressData - Updated progress information
- * @returns {Promise<Object>} Updated progress entry
  */
 export const updateStudentProgress = async (progressId, progressData) => {
   try {
@@ -641,8 +611,6 @@ export const updateStudentProgress = async (progressId, progressData) => {
 
 /**
  * Delete a progress entry
- * @param {number} progressId - Progress entry ID
- * @returns {Promise<Object>} Success status
  */
 export const deleteStudentProgress = async (progressId) => {
   try {
@@ -659,6 +627,9 @@ export const deleteStudentProgress = async (progressId) => {
   }
 };
 
+/**
+ * Default export: παρέχει όλες τις λειτουργίες ως αντικείμενο
+ */
 export default {
   supabase,
   signIn,

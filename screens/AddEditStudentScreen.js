@@ -12,10 +12,14 @@ import {
 } from 'react-native';
 import { addStudent, updateStudent, deleteStudent } from '../supabaseService';
 
+// Οθόνη για προσθήκη / επεξεργασία μαθητή.
+// Παρέχει φόρμα με πεδία μαθητή/γονέα, validation, αποθήκευση και διαγραφή.
 export default function AddEditStudentScreen({ route, navigation }) {
+  // Παίρνουμε το αντικείμενο student αν προήλθε από επεξεργασία
   const { student } = route.params || {};
-  const isEditing = !!student;
+  const isEditing = !!student; // true όταν επεξεργαζόμαστε υπάρχοντα μαθητή
 
+  // Τοπικό state: αντικείμενο φόρμας με προεπιλεγμένες τιμές
   const [formData, setFormData] = useState({
     onoma_mathiti: '',
     epitheto_mathiti: '',
@@ -30,6 +34,7 @@ export default function AddEditStudentScreen({ route, navigation }) {
     simiwseis: '',
   });
 
+  // Όταν φορτώνει η οθόνη και υπάρχει student, γεμίζουμε τη φόρμα με τα δεδομένα
   useEffect(() => {
     if (student) {
       setFormData({
@@ -48,12 +53,15 @@ export default function AddEditStudentScreen({ route, navigation }) {
     }
   }, [student]);
 
+  // Αποθήκευση μαθητή: είτε δημιουργία νέου είτε ενημέρωση υπάρχοντος
   const handleSave = async () => {
+    // Βασικός έλεγχος υποχρεωτικών πεδίων
     if (!formData.onoma_mathiti || !formData.kinhto_tilefono) {
       Alert.alert('Σφάλμα', 'Το όνομα και το τηλέφωνο είναι υποχρεωτικά');
       return;
     }
 
+    // Μετατροπές τύπων πριν την αποστολή στο backend
     const dataToSave = {
       ...formData,
       etos_gennisis: formData.etos_gennisis ? parseInt(formData.etos_gennisis) : null,
@@ -63,11 +71,14 @@ export default function AddEditStudentScreen({ route, navigation }) {
 
     let result;
     if (isEditing) {
+      // Ενημέρωση υπάρχοντος μαθητή βάσει student.student_id
       result = await updateStudent(student.student_id, dataToSave);
     } else {
+      // Προσθήκη νέου μαθητή
       result = await addStudent(dataToSave);
     }
 
+    // Ενημέρωση χρήστη ανάλογα με το αποτέλεσμα
     if (result.success) {
       Alert.alert(
         'Επιτυχία',
@@ -79,6 +90,7 @@ export default function AddEditStudentScreen({ route, navigation }) {
     }
   };
 
+  // Διαγραφή μαθητή με επιβεβαίωση — προειδοποιούμε ότι θα διαγραφούν και τα μαθήματα
   const handleDelete = () => {
     Alert.alert(
       'Διαγραφή Μαθητή',
@@ -105,10 +117,12 @@ export default function AddEditStudentScreen({ route, navigation }) {
     );
   };
 
+  // Βοηθητική συνάρτηση για ενημέρωση πεδίου φόρμας
   const updateField = (field, value) => {
     setFormData({ ...formData, [field]: value });
   };
 
+  // UI: φόρμα με τμήματα (στοιχεία μαθητή, γονέα, επικοινωνία, λεπτομέρειες)
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -116,6 +130,7 @@ export default function AddEditStudentScreen({ route, navigation }) {
     >
       <ScrollView style={styles.scrollView}>
         <View style={styles.form}>
+          {/* Ενότητα στοιχείων μαθητή */}
           <Text style={styles.sectionTitle}>Στοιχεία Μαθητή</Text>
 
           <Text style={styles.label}>Όνομα *</Text>
@@ -143,6 +158,7 @@ export default function AddEditStudentScreen({ route, navigation }) {
             keyboardType="numeric"
           />
 
+          {/* Ενότητα στοιχείων γονέα */}
           <Text style={styles.sectionTitle}>Στοιχεία Γονέα</Text>
 
           <Text style={styles.label}>Όνομα Γονέα</Text>
@@ -161,6 +177,7 @@ export default function AddEditStudentScreen({ route, navigation }) {
             placeholder="π.χ. Παπαδοπούλου"
           />
 
+          {/* Επικοινωνία */}
           <Text style={styles.sectionTitle}>Επικοινωνία</Text>
 
           <Text style={styles.label}>Κινητό Τηλέφωνο *</Text>
@@ -182,6 +199,7 @@ export default function AddEditStudentScreen({ route, navigation }) {
             autoCapitalize="none"
           />
 
+          {/* Λεπτομέρειες μαθημάτων */}
           <Text style={styles.sectionTitle}>Λεπτομέρειες Μαθημάτων</Text>
 
           <Text style={styles.label}>Μέγεθος Βιολιού</Text>
@@ -220,12 +238,14 @@ export default function AddEditStudentScreen({ route, navigation }) {
             numberOfLines={4}
           />
 
+          {/* Κουμπί αποθήκευσης */}
           <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
             <Text style={styles.saveButtonText}>
               {isEditing ? 'Ενημέρωση Μαθητή' : 'Προσθήκη Μαθητή'}
             </Text>
           </TouchableOpacity>
 
+          {/* Κουμπί διαγραφής μόνο σε λειτουργία επεξεργασίας */}
           {isEditing && (
             <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
               <Text style={styles.deleteButtonText}>Διαγραφή Μαθητή</Text>
@@ -238,6 +258,7 @@ export default function AddEditStudentScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
+  // Βασικά container και layout
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
@@ -248,6 +269,8 @@ const styles = StyleSheet.create({
   form: {
     padding: 16,
   },
+
+  // Ενότητα και ετικέτες πεδίων
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
@@ -262,6 +285,8 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     marginTop: 12,
   },
+
+  // Πεδία εισαγωγής
   input: {
     backgroundColor: '#fff',
     borderRadius: 8,
@@ -274,6 +299,8 @@ const styles = StyleSheet.create({
     height: 100,
     textAlignVertical: 'top',
   },
+
+  // Κουμπιά
   saveButton: {
     backgroundColor: '#5e72e4',
     padding: 16,

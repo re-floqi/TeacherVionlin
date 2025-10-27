@@ -12,54 +12,80 @@ import { Calendar } from 'react-native-calendars';
 import { getLessonsByDateRange, signOut } from '../supabaseService';
 import { useTheme } from '../ThemeContext';
 
+// Αρχική οθόνη: ημερολόγιο + λίστα μαθημάτων για την επιλεγμένη ημέρα.
+// Παρέχει σύνδεσμο προς οθόνες μαθητών, επαναλαμβανόμενων, στατιστικών και ρυθμίσεων.
 export default function HomeScreen({ navigation, onLogout }) {
+  // Θέμα από context (χρώματα, σκοτεινό/φωτεινό)
   const { theme, isDarkMode, toggleTheme } = useTheme();
+
+  // Ημερομηνία που έχει επιλέξει ο χρήστης (YYYY-MM-DD)
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+
+  // Όλα τα μαθήματα που φορτώθηκαν (συνήθως για τρέχον μήνα)
   const [lessons, setLessons] = useState([]);
+
+  // Ανάμνηση για το calendar (σημασμένες ημερομηνίες / επιλεγμένη)
   const [markedDates, setMarkedDates] = useState({});
+
+  // Pull-to-refresh κατάσταση
   const [refreshing, setRefreshing] = useState(false);
 
+  // Φορτώνουμε μαθήματα κατά το mount της οθόνης
   useEffect(() => {
     loadLessons();
   }, []);
 
+  // Κατεβάζει τα μαθήματα για τον τρέχοντα μήνα και ενημερώνει state
   const loadLessons = async () => {
-    // Load lessons for the current month
+    // Υπολογίζουμε το πρώτο και το τελευταίο ημέρας του τρέχοντος μήνα
     const today = new Date();
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
     const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
+    // Κλήση προς backend για μαθήματα στο διάστημα
     const result = await getLessonsByDateRange(
       firstDay.toISOString(),
       lastDay.toISOString()
     );
 
     if (result.success) {
+      // Αποθηκεύουμε τα μαθήματα και ενημερώνουμε τις επισημασμένες ημερομηνίες
       setLessons(result.data);
       markLessonDates(result.data);
+    } else {
+      // Σε περίπτωση σφάλματος, μπορούμε να ειδοποιήσουμε (προς το παρόν σιωπηλό)
+      console.error('Failed to load lessons', result.error);
     }
   };
 
+  // Σημαίνει στο calendar τις ημερομηνίες που υπάρχουν μαθήματα
   const markLessonDates = (lessonData) => {
     const marked = {};
     lessonData.forEach(lesson => {
+      // Παίρνουμε μόνο το κομμάτι ημερομηνίας από το ISO timestamp
       const date = lesson.imera_ora_enarksis.split('T')[0];
       if (!marked[date]) {
+        // Προσθέτουμε ένδειξη dot για ημερομηνίες με μαθήματα
         marked[date] = { marked: true, dotColor: '#5e72e4' };
       }
     });
+    // Σιγουρευόμαστε ότι η επιλεγμένη ημερομηνία είναι επισημασμένη ως selected
     marked[selectedDate] = { ...marked[selectedDate], selected: true, selectedColor: '#5e72e4' };
     setMarkedDates(marked);
   };
 
+  // Pull-to-refresh handler: δείχνει loader και ξαναφορτώνει τα μαθήματα
   const onRefresh = async () => {
     setRefreshing(true);
     await loadLessons();
     setRefreshing(false);
   };
 
+  // Όταν ο χρήστης επιλέγει ημέρα στο calendar
   const handleDateSelect = (day) => {
     setSelectedDate(day.dateString);
+
+    // Ενημερώνουμε το markedDates για να απενεργοποιήσουμε προηγούμενες επισημάνσεις
     const newMarked = { ...markedDates };
     Object.keys(newMarked).forEach(date => {
       newMarked[date] = { ...newMarked[date], selected: false };
@@ -68,6 +94,8 @@ export default function HomeScreen({ navigation, onLogout }) {
     setMarkedDates(newMarked);
   };
 
+  // Επιστρέφει τα μαθήματα που αντιστοιχούν στην επιλεγμένη ημερομηνία,
+  // ταξινομημένα χρονολογικά
   const getLessonsForSelectedDate = () => {
     return lessons.filter(lesson => {
       const lessonDate = lesson.imera_ora_enarksis.split('T')[0];
@@ -75,11 +103,13 @@ export default function HomeScreen({ navigation, onLogout }) {
     }).sort((a, b) => new Date(a.imera_ora_enarksis) - new Date(b.imera_ora_enarksis));
   };
 
+  // Μορφοποίηση ώρας για εμφάνιση (el-GR, HH:MM)
   const formatTime = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' });
   };
 
+  // Επιστρέφει χρώμα βάσει κατάστασης πληρωμής (για badge)
   const getPaymentStatusColor = (status) => {
     switch (status) {
       case 'paid': return '#28a745';
@@ -89,6 +119,7 @@ export default function HomeScreen({ navigation, onLogout }) {
     }
   };
 
+  // Ανθρώπινη ετικέτα για κατάσταση πληρωμής
   const getPaymentStatusText = (status) => {
     switch (status) {
       case 'paid': return 'Πληρώθηκε';
@@ -98,6 +129,7 @@ export default function HomeScreen({ navigation, onLogout }) {
     }
   };
 
+  // Χειρισμός αποσύνδεσης: εμφάνιση επιβεβαίωσης και κλήση signOut
   const handleLogout = async () => {
     Alert.alert(
       'Αποσύνδεση',
@@ -108,17 +140,20 @@ export default function HomeScreen({ navigation, onLogout }) {
           text: 'Αποσύνδεση',
           onPress: async () => {
             await signOut();
-            onLogout();
+            onLogout(); // Ενημερώνει το parent component για το logout
           },
         },
       ]
     );
   };
 
+  // Μαθήματα για την επιλεγμένη ημέρα (χρησιμοποιείται στο render)
   const selectedDateLessons = getLessonsForSelectedDate();
 
+  // Render UI
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      {/* Header με γρήγορους συνδέσμους και κουμπιά */}
       <View style={[styles.header, { backgroundColor: theme.colors.headerBackground }]}>
         <View style={styles.headerButtons}>
           <TouchableOpacity
@@ -160,6 +195,7 @@ export default function HomeScreen({ navigation, onLogout }) {
         </View>
       </View>
 
+      {/* Κύριο περιεχόμενο με calendar και λίστα μαθημάτων */}
       <ScrollView
         style={styles.scrollView}
         refreshControl={
@@ -203,6 +239,7 @@ export default function HomeScreen({ navigation, onLogout }) {
             </TouchableOpacity>
           </View>
 
+          {/* Empty state ή λίστα μαθημάτων για την ημέρα */}
           {selectedDateLessons.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={[styles.emptyStateText, { color: theme.colors.textTertiary }]}>
@@ -214,6 +251,7 @@ export default function HomeScreen({ navigation, onLogout }) {
               <TouchableOpacity
                 key={lesson.lesson_id}
                 style={[styles.lessonCard, { backgroundColor: theme.colors.card }]}
+                // Tap: επεξεργασία/προβολή μαθήματος
                 onPress={() => navigation.navigate('AddEditLesson', { lesson })}
               >
                 <View style={styles.lessonHeader}>
@@ -224,9 +262,11 @@ export default function HomeScreen({ navigation, onLogout }) {
                     <Text style={styles.paymentBadgeText}>{getPaymentStatusText(lesson.katastasi_pliromis)}</Text>
                   </View>
                 </View>
+
                 <Text style={[styles.lessonStudent, { color: theme.colors.textSecondary }]}>
-                  {lesson.students?.onoma_mathiti} {lesson.students?.epitheto_mathiti}
+                  {lesson.students?.onoma_mathiti} {lesson.students?.epitheto_mathimati}
                 </Text>
+
                 <View style={styles.lessonDetails}>
                   <Text style={[styles.lessonDetail, { color: theme.colors.textSecondary }]}>
                     ⏱️ {lesson.diarkeia_lepta} λεπτά
@@ -235,6 +275,7 @@ export default function HomeScreen({ navigation, onLogout }) {
                     💶 {lesson.timi}€
                   </Text>
                 </View>
+
                 {lesson.simiwseis_mathimatos && (
                   <Text style={[styles.lessonNotes, { color: theme.colors.textTertiary }]}>
                     {lesson.simiwseis_mathimatos}
@@ -249,6 +290,7 @@ export default function HomeScreen({ navigation, onLogout }) {
   );
 }
 
+// Στυλ οθόνης — καθαρά παρουσίαση, όχι λογική
 const styles = StyleSheet.create({
   container: {
     flex: 1,

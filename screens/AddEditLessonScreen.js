@@ -14,15 +14,21 @@ import {
 import { Picker } from '@react-native-picker/picker';
 import { addLesson, updateLesson, deleteLesson, getStudents, addRecurringLesson } from '../supabaseService';
 
+// Οθόνη για προσθήκη / επεξεργασία μαθήματος.
+// Περιέχει φόρμα, έλεγχο πεδίων, λογική αποθήκευσης και διαγραφής,
+// καθώς και επιλογή για δημιουργία εβδομαδιαίου κανόνα επανάληψης.
 export default function AddEditLessonScreen({ route, navigation }) {
+  // Παίρνουμε τα παραμέτρους από το route: lesson (όταν επεξεργαζόμαστε) και selectedDate
   const { lesson, selectedDate } = route.params || {};
-  const isEditing = !!lesson;
+  const isEditing = !!lesson; // true αν υπάρχει lesson => λειτουργία επεξεργασίας
 
-  const [students, setStudents] = useState([]);
-  const [isRecurring, setIsRecurring] = useState(false);
+  // Τοπικό state
+  const [students, setStudents] = useState([]); // λίστα μαθητών για το Picker
+  const [isRecurring, setIsRecurring] = useState(false); // σημαία για επαναλαμβανόμενο μάθημα
   const [formData, setFormData] = useState({
+    // Αρχικά πεδία φόρμας με λογικές προεπιλογές
     student_id: '',
-    date: selectedDate || new Date().toISOString().split('T')[0],
+    date: selectedDate || new Date().toISOString().split('T')[0], // YYYY-MM-DD
     time: '17:00',
     diarkeia_lepta: '40',
     timi: '',
@@ -30,14 +36,17 @@ export default function AddEditLessonScreen({ route, navigation }) {
     simiwseis_mathimatos: '',
   });
 
+  // useEffect για αρχικό φόρτωμα μαθητών και γέμισμα φόρμας αν επεξεργαζόμαστε
   useEffect(() => {
     loadStudents();
     
     if (lesson) {
+      // Αν έχουμε lesson (επεξεργασία), μετατρέπουμε την ημερομηνία έναρξης
       const lessonDate = new Date(lesson.imera_ora_enarksis);
       setFormData({
         student_id: lesson.student_id?.toString() || '',
         date: lessonDate.toISOString().split('T')[0],
+        // ΤοLocaleTimeString με 'en-GB' δίνει μορφή HH:MM 24ωρη
         time: lessonDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
         diarkeia_lepta: lesson.diarkeia_lepta?.toString() || '40',
         timi: lesson.timi?.toString() || '',
@@ -47,16 +56,18 @@ export default function AddEditLessonScreen({ route, navigation }) {
     }
   }, [lesson]);
 
+  // Φόρτωση μαθητών από το supabaseService και αυτόματη επιλογή αν υπάρχει μόνο ένας μαθητής
   const loadStudents = async () => {
     const result = await getStudents();
     if (result.success) {
       setStudents(result.data);
       
-      // Auto-select student if there's only one
+      // Auto-select student if there's only one (μόνο κατά προσθήκης, όχι κατά επεξεργασία)
       if (!isEditing && result.data.length === 1) {
         setFormData(prev => ({ 
           ...prev, 
           student_id: result.data[0].student_id.toString(),
+          // Γέμισμα προεπιλεγμένων τιμών από τον μαθητή αν υπάρχουν
           diarkeia_lepta: result.data[0].default_diarkeia?.toString() || '40',
           timi: result.data[0].default_timi?.toString() || '',
         }));
@@ -64,8 +75,10 @@ export default function AddEditLessonScreen({ route, navigation }) {
     }
   };
 
+  // Όταν αλλάζει η επιλογή μαθητή στο Picker
   const handleStudentChange = (studentId) => {
     const student = students.find(s => s.student_id.toString() === studentId);
+    // Αν υπάρχει ο μαθητής και είμαστε σε λειτουργία προσθήκης, γεμίζουμε προεπιλεγμένα πεδία
     if (student && !isEditing) {
       setFormData({
         ...formData,
@@ -74,18 +87,23 @@ export default function AddEditLessonScreen({ route, navigation }) {
         timi: student.default_timi?.toString() || '',
       });
     } else {
+      // Απλώς αλλάζουμε τον επιλεγμένο student_id
       setFormData({ ...formData, student_id: studentId });
     }
   };
 
+  // Αποθήκευση μαθήματος (προσθήκη ή ενημέρωση). Επίσης δημιουργία κανόνα επανάληψης αν ζητηθεί.
   const handleSave = async () => {
+    // Βασικός έλεγχος ότι τα υποχρεωτικά πεδία είναι συμπληρωμένα
     if (!formData.student_id || !formData.date || !formData.time || !formData.diarkeia_lepta || !formData.timi) {
       Alert.alert('Σφάλμα', 'Παρακαλώ συμπληρώστε όλα τα υποχρεωτικά πεδία');
       return;
     }
 
+    // Δημιουργία ISO ημερομηνίας+ώρας για αποθήκευση (προσθέτουμε :00 για δευτερόλεπτα)
     const dateTime = new Date(`${formData.date}T${formData.time}:00`);
     
+    // Προετοιμασία αντικειμένου για αποστολή στο backend
     const dataToSave = {
       student_id: parseInt(formData.student_id),
       imera_ora_enarksis: dateTime.toISOString(),
@@ -97,29 +115,33 @@ export default function AddEditLessonScreen({ route, navigation }) {
 
     let result;
     if (isEditing) {
+      // Ενημέρωση υπάρχοντος μαθήματος με το lesson.lesson_id
       result = await updateLesson(lesson.lesson_id, dataToSave);
     } else {
+      // Προσθήκη νέου μαθήματος
       result = await addLesson(dataToSave);
       
-      // If recurring is enabled and lesson was created successfully, create recurring rule
+      // Αν ενεργοποιήθηκε η επιλογή επανάληψης, δημιουργούμε κανόνα επανάληψης μετά την επιτυχία της προσθήκης
       if (result.success && isRecurring) {
         const recurringData = {
           student_id: parseInt(formData.student_id),
-          imera_evdomadas: dateTime.getDay(), // Day of week (0-6)
+          imera_evdomadas: dateTime.getDay(), // Ημέρα εβδομάδας (0-6)
           ora_enarksis: formData.time,
           diarkeia_lepta: parseInt(formData.diarkeia_lepta),
           timi: parseFloat(formData.timi),
           enarxi_epanallipsis: formData.date,
-          lixi_epanallipsis: null, // No end date
+          lixi_epanallipsis: null, // Χωρίς ημερομηνία λήξης
         };
         
         const recurringResult = await addRecurringLesson(recurringData);
         if (!recurringResult.success) {
+          // Προειδοποίηση αν αποτύχει η δημιουργία κανόνα επανάληψης
           Alert.alert('Προειδοποίηση', 'Το μάθημα δημιουργήθηκε αλλά ο κανόνας επανάληψης απέτυχε');
         }
       }
     }
 
+    // Ειδοποίηση χρήστη ανάλογα με το αποτέλεσμα της αποθήκευσης
     if (result.success) {
       Alert.alert(
         'Επιτυχία',
@@ -127,10 +149,12 @@ export default function AddEditLessonScreen({ route, navigation }) {
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
     } else {
+      // Εμφάνιση σφάλματος αν αποτύχει η αποθήκευση
       Alert.alert('Σφάλμα', result.error || 'Κάτι πήγε στραβά');
     }
   };
 
+  // Διαγραφή μαθήματος με επιβεβαίωση
   const handleDelete = () => {
     Alert.alert(
       'Διαγραφή Μαθήματος',
@@ -141,6 +165,7 @@ export default function AddEditLessonScreen({ route, navigation }) {
           text: 'Διαγραφή',
           style: 'destructive',
           onPress: async () => {
+            // Κλήση deleteLesson και επαναφόρτωση / επιστροφή πίσω
             const result = await deleteLesson(lesson.lesson_id);
             if (result.success) {
               navigation.goBack();
@@ -153,10 +178,12 @@ export default function AddEditLessonScreen({ route, navigation }) {
     );
   };
 
+  // Βοηθητική συνάρτηση για ενημέρωση πεδίου φόρμας
   const updateField = (field, value) => {
     setFormData({ ...formData, [field]: value });
   };
 
+  // UI: φόρμα με πεδία, Picker για μαθητές/κατάσταση πληρωμής, switch για επαναληπτικά, κουμπιά
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -175,7 +202,7 @@ export default function AddEditLessonScreen({ route, navigation }) {
               {students.map((student) => (
                 <Picker.Item
                   key={student.student_id}
-                  label={`${student.onoma_mathiti} ${student.epitheto_mathiti || ''}`}
+                  label={`${student.onoma_mathiti} ${student.epitheto_mathimati || ''}`}
                   value={student.student_id.toString()}
                 />
               ))}
@@ -268,6 +295,7 @@ export default function AddEditLessonScreen({ route, navigation }) {
   );
 }
 
+// Στυλ για την οθόνη — διατηρούνται όπως ήταν
 const styles = StyleSheet.create({
   container: {
     flex: 1,

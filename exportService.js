@@ -70,14 +70,31 @@ export const exportStudentsToCSV = async (students, filename = 'students.csv') =
     // Create CSV header
     const header = 'Όνομα,Επώνυμο,Έτος Γέννησης,Γονέας,Τηλέφωνο,Email,Μέγεθος Βιολιού,Προεπ. Διάρκεια,Προεπ. Τιμή,Σημειώσεις\n';
     
+    // Escape function for CSV
+    function csvEscape(val) {
+      if (val === undefined || val === null) return '';
+      return `"${String(val).replace(/"/g, '""')}"`;
+    }
+
     // Create CSV rows
     const rows = students.map(student => {
-      const parentName = student.onoma_gonea || student.epitheto_gonea
-        ? `${student.onoma_gonea || ''} ${student.epitheto_gonea || ''}`.trim()
-        : '';
-      const notes = (student.simiwseis || '').replace(/"/g, '""'); // Escape quotes
-      
-      return `"${student.onoma_mathiti}","${student.epitheto_mathiti || '"}",${student.etos_gennisis || ''},"${parentName}","${student.kinhto_tilefono}","${student.email || '"}","${student.megethos_violiou || '"}",${student.default_diarkeia || ''},${student.default_timi || ''},"${notes}"`;
+      const parentName = [(student.onoma_gonea || ''), (student.epitheto_gonea || '')].filter(Boolean).join(' ');
+      const notes = student.simiwseis || '';
+
+      const values = [
+        student.onoma_mathiti,
+        student.epitheto_mathiti,
+        student.etos_gennisis,
+        parentName,
+        student.kinhto_tilefono,
+        student.email,
+        student.megethos_violiou,
+        student.default_diarkeia,
+        student.default_timi,
+        notes
+      ].map(csvEscape);
+
+      return values.join(',');
     }).join('\n');
     
     const csvContent = header + rows;

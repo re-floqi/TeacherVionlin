@@ -12,11 +12,18 @@ import {
 } from 'react-native';
 import { signIn } from '../supabaseService';
 
+// Οθόνη σύνδεσης χρήστη.
+// Περιέχει φόρμα email/password, validation και κλήση στο supabaseService για σύνδεση.
 export default function LoginScreen({ onLogin }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  // Τοπικό state για τα πεδία της φόρμας και κατάσταση φόρτωσης
+  const [email, setEmail] = useState('');          // Εισαγόμενο email χρήστη
+  const [password, setPassword] = useState('');    // Εισαγόμενος κωδικός
+  const [loading, setLoading] = useState(false);   // Σημαία για απενεργοποίηση κουμπιού κατά την αίτηση
 
+  // Χειριστής του κουμπιού σύνδεσης
+  // - Ελέγχει ότι έχουν συμπληρωθεί πεδία
+  // - Καλεί την signIn συνάρτηση του supabaseService
+  // - Ειδοποιεί τον γονέα (onLogin) σε επιτυχία ή εμφανίζει Alert σε αποτυχία
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('Σφάλμα', 'Παρακαλώ συμπληρώστε email και κωδικό');
@@ -28,12 +35,16 @@ export default function LoginScreen({ onLogin }) {
     setLoading(false);
 
     if (result.success) {
+      // Ενημέρωση ανώτερου component ότι ο χρήστης συνδέθηκε επιτυχώς
       onLogin();
     } else {
+      // Εμφάνιση σφάλματος σύνδεσης στον χρήστη
       Alert.alert('Σφάλμα σύνδεσης', result.error || 'Παρακαλώ ελέγξτε τα στοιχεία σας');
     }
   };
 
+  // UI: φόρμα σύνδεσης με keyboard avoiding για κινητά
+  // Περιλαμβάνει: λογότυπο, πεδία email/password, κουμπί σύνδεσης και σημείωμα
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -41,12 +52,14 @@ export default function LoginScreen({ onLogin }) {
     >
       <View style={styles.content}>
         <View style={styles.header}>
+          {/* Εικονίδιο / λογότυπο της εφαρμογής */}
           <Text style={styles.logo}>🎻</Text>
           <Text style={styles.title}>Διαχείριση Μαθημάτων</Text>
           <Text style={styles.subtitle}>Βιολί</Text>
         </View>
 
         <View style={styles.form}>
+          {/* Πεδία εισαγωγής χρήστη */}
           <TextInput
             style={styles.input}
             placeholder="Email"
@@ -66,6 +79,7 @@ export default function LoginScreen({ onLogin }) {
             autoComplete="password"
           />
 
+          {/* Κουμπί σύνδεσης: απενεργοποιείται όταν loading */}
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}
             onPress={handleLogin}
@@ -77,6 +91,7 @@ export default function LoginScreen({ onLogin }) {
           </TouchableOpacity>
         </View>
 
+        {/* Σύντομη πληροφορία/οδηγία για τον χρήστη */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>
             Για πρώτη χρήση, δημιουργήστε λογαριασμό στο Supabase
@@ -87,6 +102,7 @@ export default function LoginScreen({ onLogin }) {
   );
 }
 
+// Στυλ: διατηρούμε την υπάρχουσα δομή και προσθέτουμε περιγραφικές ετικέτες
 const styles = StyleSheet.create({
   container: {
     flex: 1,

@@ -10,14 +10,19 @@ import {
 } from 'react-native';
 import { getStudents, deleteStudent } from '../supabaseService';
 
+// Οθόνη που εμφανίζει τη λίστα μαθητών.
+// Επιτρέπει φόρτωση, ανανέωση, επεξεργασία (tap) και διαγραφή (long press).
 export default function StudentsScreen({ navigation }) {
+  // Τοπικό state: λίστα μαθητών και κατάσταση ανανέωσης
   const [students, setStudents] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Φόρτωση μαθητών κατά το mount της οθόνης
   useEffect(() => {
     loadStudents();
   }, []);
 
+  // Επαναφόρτωση όταν η οθόνη αποκτά focus (για να εμφανίζονται αλλαγές μετά από edit/add)
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
       loadStudents();
@@ -25,6 +30,7 @@ export default function StudentsScreen({ navigation }) {
     return unsubscribe;
   }, [navigation]);
 
+  // Κατεβάζει τους μαθητές από το backend (supabaseService) και ενημερώνει το state
   const loadStudents = async () => {
     const result = await getStudents();
     if (result.success) {
@@ -32,12 +38,14 @@ export default function StudentsScreen({ navigation }) {
     }
   };
 
+  // Χειρισμός pull-to-refresh: δείχνει το loader και ξαναφορτώνει τα δεδομένα
   const onRefresh = async () => {
     setRefreshing(true);
     await loadStudents();
     setRefreshing(false);
   };
 
+  // Διαγραφή μαθητή με επιβεβαίωση. Ενημερώνει τη λίστα μετά την επιτυχία.
   const handleDeleteStudent = (student) => {
     Alert.alert(
       'Διαγραφή Μαθητή',
@@ -60,10 +68,13 @@ export default function StudentsScreen({ navigation }) {
     );
   };
 
+  // Render function για κάθε κάρτα μαθητή στη λίστα
   const renderStudent = ({ item }) => (
     <TouchableOpacity
       style={styles.studentCard}
+      // Tap: πηγαίνει στην οθόνη προσθήκης/επεξεργασίας και περνάει τον μαθητή
       onPress={() => navigation.navigate('AddEditStudent', { student: item })}
+      // Long press: ξεκινάει τη διαδικασία διαγραφής
       onLongPress={() => handleDeleteStudent(item)}
     >
       <View style={styles.studentHeader}>
@@ -71,6 +82,7 @@ export default function StudentsScreen({ navigation }) {
           {item.onoma_mathiti} {item.epitheto_mathiti}
         </Text>
         {item.etos_gennisis && (
+          // Υπολογισμός ηλικίας από το έτος γέννησης
           <Text style={styles.studentAge}>
             ({new Date().getFullYear() - item.etos_gennisis} ετών)
           </Text>
@@ -97,6 +109,7 @@ export default function StudentsScreen({ navigation }) {
       </View>
 
       {item.simiwseis && (
+        // Εμφάνιση σύντομων σημειώσεων (2 γραμμές max)
         <Text style={styles.studentNotes} numberOfLines={2}>
           📝 {item.simiwseis}
         </Text>
@@ -104,6 +117,7 @@ export default function StudentsScreen({ navigation }) {
     </TouchableOpacity>
   );
 
+  // UI: header με κουμπί προσθήκης και FlatList με pull-to-refresh
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -137,6 +151,7 @@ export default function StudentsScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  // Στυλ για την οθόνη της λίστας μαθητών
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',

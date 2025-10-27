@@ -4,29 +4,42 @@
  * This module handles push notifications for upcoming lessons and payment reminders.
  * Note: Requires expo-notifications to be installed and configured.
  * Run: expo install expo-notifications
+ *
+ * Σχόλια (GR):
+ * - Αυτό το αρχείο προσφέρει helpers για την αίτηση αδειών, τον προγραμματισμό
+ *   ειδοποιήσεων για επερχόμενα μαθήματα και υπενθυμίσεις πληρωμών.
+ * - Χρησιμοποιεί το API του expo-notifications και πρέπει να λειτουργεί σε
+ *   περιβάλλον Expo / React Native με σωστή ρύθμιση.
  */
 
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 // Configure notification behavior
+// Ορίζουμε πώς θα εμφανίζονται οι ειδοποιήσεις όταν η εφαρμογή είναι foreground.
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
+    shouldShowAlert: true,   // Εμφάνιση alert
+    shouldPlaySound: true,   // Αναπαραγωγή ήχου
+    shouldSetBadge: true,    // Ενημέρωση badge (iOS)
   }),
 });
 
 /**
  * Request notification permissions
  * @returns {Promise<boolean>} Whether permissions were granted
+ *
+ * Περιγραφή:
+ * - Ελέγχει την τρέχουσα κατάσταση αδειών και, αν χρειάζεται, ζητάει άδεια.
+ * - Σε Android δημιουργεί κανάλι ειδοποιήσεων με ρυθμίσεις για vibration/light.
+ * - Επιστρέφει true αν οι άδειες δόθηκαν, αλλιώς false.
  */
 export const requestNotificationPermissions = async () => {
   try {
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
 
+    // Ζητάμε δικαιώματα αν δεν έχουν ήδη δοθεί
     if (existingStatus !== 'granted') {
       const { status } = await Notifications.requestPermissionsAsync();
       finalStatus = status;
@@ -38,6 +51,7 @@ export const requestNotificationPermissions = async () => {
     }
 
     // For Android, create a notification channel
+    // Στο Android χρειάζεται κανάλι για να εμφανίζονται σωστά οι ειδοποιήσεις
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('lessons', {
         name: 'Lessons',
@@ -49,6 +63,7 @@ export const requestNotificationPermissions = async () => {
 
     return true;
   } catch (error) {
+    // Καταγραφή σφάλματος χωρίς να σπάει η ροή της εφαρμογής
     console.error('Error requesting notification permissions:', error);
     return false;
   }
@@ -59,6 +74,11 @@ export const requestNotificationPermissions = async () => {
  * @param {Object} lesson - Lesson object with details
  * @param {number} minutesBefore - Minutes before lesson to send notification
  * @returns {Promise<string|null>} Notification ID or null if failed
+ *
+ * Περιγραφή:
+ * - Προγραμματίζει ειδοποίηση X λεπτά πριν το μάθημα.
+ * - Αγνοεί την αιτηση αν η ώρα ειδοποίησης έχει ήδη περάσει.
+ * - Επιστρέφει το notificationId αν προγραμματίστηκε επιτυχώς, αλλιώς null.
  */
 export const scheduleUpcomingLessonNotification = async (lesson, minutesBefore = 60) => {
   try {
@@ -70,10 +90,12 @@ export const scheduleUpcomingLessonNotification = async (lesson, minutesBefore =
       return null;
     }
 
+    // Χτίζουμε όνομα μαθητή για εμφανιζόμενο κείμενο (fallback αν λείπουν πεδία)
     const studentName = lesson.students
       ? `${lesson.students.onoma_mathiti} ${lesson.students.epitheto_mathiti || ''}`
       : 'Μαθητής';
 
+    // Προγραμματισμός ειδοποίησης με συγκεκριμένο trigger (ημερομηνία)
     const notificationId = await Notifications.scheduleNotificationAsync({
       content: {
         title: '🎻 Επερχόμενο μάθημα',
@@ -86,6 +108,7 @@ export const scheduleUpcomingLessonNotification = async (lesson, minutesBefore =
 
     return notificationId;
   } catch (error) {
+    // Καταγραφή και επιστροφή null σε αποτυχία
     console.error('Error scheduling lesson notification:', error);
     return null;
   }
@@ -96,6 +119,10 @@ export const scheduleUpcomingLessonNotification = async (lesson, minutesBefore =
  * @param {Array} lessons - Array of lesson objects
  * @param {number} minutesBefore - Minutes before each lesson to send notification
  * @returns {Promise<Array>} Array of notification IDs
+ *
+ * Περιγραφή:
+ * - Βασίζεται στην scheduleUpcomingLessonNotification για κάθε μάθημα.
+ * - Επιστρέφει τον πίνακα με τα IDs των ειδοποιήσεων που προγραμματίστηκαν.
  */
 export const scheduleMultipleLessonNotifications = async (lessons, minutesBefore = 60) => {
   const notificationIds = [];
@@ -114,6 +141,10 @@ export const scheduleMultipleLessonNotifications = async (lessons, minutesBefore
  * Schedule a payment reminder notification
  * @param {Object} lesson - Lesson object with pending payment
  * @returns {Promise<string|null>} Notification ID or null if failed
+ *
+ * Περιγραφή:
+ * - Δημιουργεί υπενθύμιση πληρωμής 1 μέρα μετά το μάθημα (σύμφωνα με την τρέχουσα υλοποίηση).
+ * - Αγνοεί αν η ώρα υπενθύμισης έχει περάσει.
  */
 export const schedulePaymentReminder = async (lesson) => {
   try {
@@ -150,6 +181,10 @@ export const schedulePaymentReminder = async (lesson) => {
  * Schedule payment reminders for pending lessons
  * @param {Array} lessons - Array of lessons with pending payments
  * @returns {Promise<Array>} Array of notification IDs
+ *
+ * Περιγραφή:
+ * - Φιλτράρει τα μαθήματα με κατάσταση 'pending' και καλεί schedulePaymentReminder.
+ * - Επιστρέφει τα IDs των προγραμματισμένων υπενθυμίσεων.
  */
 export const schedulePaymentReminders = async (lessons) => {
   const notificationIds = [];
@@ -160,64 +195,4 @@ export const schedulePaymentReminders = async (lessons) => {
   
   for (const lesson of pendingLessons) {
     const id = await schedulePaymentReminder(lesson);
-    if (id) {
-      notificationIds.push(id);
-    }
-  }
-  
-  return notificationIds;
-};
-
-/**
- * Cancel a scheduled notification
- * @param {string} notificationId - ID of the notification to cancel
- */
-export const cancelNotification = async (notificationId) => {
-  try {
-    await Notifications.cancelScheduledNotificationAsync(notificationId);
-  } catch (error) {
-    console.error('Error canceling notification:', error);
-  }
-};
-
-/**
- * Cancel all scheduled notifications
- */
-export const cancelAllNotifications = async () => {
-  try {
-    await Notifications.cancelAllScheduledNotificationsAsync();
-  } catch (error) {
-    console.error('Error canceling all notifications:', error);
-  }
-};
-
-/**
- * Send an immediate notification (for testing)
- * @param {string} title - Notification title
- * @param {string} body - Notification body
- */
-export const sendImmediateNotification = async (title, body) => {
-  try {
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title,
-        body,
-        sound: true,
-      },
-      trigger: null, // Send immediately
-    });
-  } catch (error) {
-    console.error('Error sending immediate notification:', error);
-  }
-};
-
-export default {
-  requestNotificationPermissions,
-  scheduleUpcomingLessonNotification,
-  scheduleMultipleLessonNotifications,
-  schedulePaymentReminder,
-  schedulePaymentReminders,
-  cancelNotification,
-  cancelAllNotifications,
-  sendImmediateNotification,
-};
+    if
