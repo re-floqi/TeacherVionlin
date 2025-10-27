@@ -264,7 +264,7 @@ export default function HomeScreen({ navigation, onLogout }) {
                 </View>
 
                 <Text style={[styles.lessonStudent, { color: theme.colors.textSecondary }]}>
-                  {lesson.students?.onoma_mathiti} {lesson.students?.epitheto_mathimati}
+                  {lesson.students?.onoma_mathiti} {lesson.students?.epitheto_mathiti}
                 </Text>
 
                 <View style={styles.lessonDetails}>
