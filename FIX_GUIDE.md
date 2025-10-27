@@ -85,7 +85,7 @@
 **Αρχείο:** `App.js`
 
 Προστέθηκε η νέα οθόνη στο navigation stack:
-```javascript
+```jsx
 <Stack.Screen 
   name="AddEditRecurringLesson" 
   component={AddEditRecurringLessonScreen}
