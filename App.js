@@ -140,3 +140,51 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
+
+async function deleteStudent(id) {
+  try {
+    const { data, error } = await supabase
+      .from('students')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Delete student error', error);
+      throw error;
+    }
+    // επιβεβαίωση διαγραφής: ανανέωση λίστας / state
+    await fetchStudents(); // ή setStudents(prev => prev.filter(s => s.id !== id))
+    return data;
+  } catch (err) {
+    // εμφάνιση χρήστη / ειδοποίηση
+    console.error('Failed to delete student', err);
+    return null;
+  }
+}
+
+async function updateLessonPayment(lessonId, updates) {
+  try {
+    // Βεβαιώσου ότι payment_status είναι έγκυρο string: 'pending'|'paid'|'cancelled'
+    if (updates.payment_status && !['pending','paid','cancelled'].includes(updates.payment_status)) {
+      throw new Error('Invalid payment_status');
+    }
+
+    const { data, error } = await supabase
+      .from('lessons')
+      .update(updates)
+      .eq('id', lessonId)
+      .select();
+
+    if (error) {
+      console.error('Update payment error', error);
+      throw error;
+    }
+
+    // update local state
+    setLessons(prev => prev.map(l => l.id === lessonId ? { ...l, ...data[0] } : l));
+    return data[0];
+  } catch (err) {
+    console.error('Failed to update payment', err);
+    return null;
+  }
+}
