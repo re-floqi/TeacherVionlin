@@ -11,6 +11,7 @@ import StudentsScreen from './screens/StudentsScreen';
 import AddEditStudentScreen from './screens/AddEditStudentScreen';
 import AddEditLessonScreen from './screens/AddEditLessonScreen';
 import RecurringLessonsScreen from './screens/RecurringLessonsScreen';
+import AddEditRecurringLessonScreen from './screens/AddEditRecurringLessonScreen';
 import PaymentStatsScreen from './screens/PaymentStatsScreen';
 import SettingsScreen from './screens/SettingsScreen';
 
@@ -98,6 +99,13 @@ function AppContent() {
                 name="RecurringLessons" 
                 component={RecurringLessonsScreen}
                 options={{ title: 'Επαναλαμβανόμενα Μαθήματα' }}
+              />
+              <Stack.Screen 
+                name="AddEditRecurringLesson" 
+                component={AddEditRecurringLessonScreen}
+                options={({ route }) => ({ 
+                  title: route.params?.recurringLesson ? 'Επεξεργασία Κανόνα' : 'Νέος Κανόνας Επανάληψης' 
+                })}
               />
               <Stack.Screen 
                 name="PaymentStats" 
