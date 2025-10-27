@@ -79,6 +79,8 @@ export default function RecurringLessonsScreen({ navigation }) {
   const renderRecurringLesson = ({ item }) => (
     <TouchableOpacity
       style={styles.recurringCard}
+      // Tap: επεξεργασία κανόνα
+      onPress={() => navigation.navigate('AddEditRecurringLesson', { recurringLesson: item })}
       // Long press για διαγραφή κανόνα
       onLongPress={() => handleDeleteRecurring(item)}
     >
@@ -120,6 +122,12 @@ export default function RecurringLessonsScreen({ navigation }) {
         <Text style={styles.headerText}>
           Τα επαναλαμβανόμενα μαθήματα δημιουργούν αυτόματα μαθήματα κάθε εβδομάδα.
         </Text>
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => navigation.navigate('AddEditRecurringLesson')}
+        >
+          <Text style={styles.addButtonText}>+ Νέος Κανόνας</Text>
+        </TouchableOpacity>
       </View>
 
       <FlatList
@@ -161,6 +169,18 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#856404',
     textAlign: 'center',
+    marginBottom: 12,
+  },
+  addButton: {
+    backgroundColor: '#5e72e4',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  addButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 
   // Λίστα και κάρτα κανόνα
