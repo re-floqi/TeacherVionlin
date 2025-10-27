@@ -195,4 +195,34 @@ export const schedulePaymentReminders = async (lessons) => {
   
   for (const lesson of pendingLessons) {
     const id = await schedulePaymentReminder(lesson);
-    if
+    if (id) {
+      notificationIds.push(id);
+    }
+  }
+  
+  return notificationIds;
+};
+
+/**
+ * Send a payment reminder notification immediately
+ * @param {Object} lesson - Lesson object with pending payment
+ * @returns {Promise<string|null>} Notification ID or null if failed
+ *
+ * Περιγραφή:
+ * - Στέλνει άμεση υπενθύμιση πληρωμής για ένα μάθημα.
+ * - Χρησιμοποιεί την schedulePaymentReminder για τον προγραμματισμό.
+ */
+export async function sendPaymentReminder(lesson) {
+  try {
+    const id = await schedulePaymentReminder(lesson);
+    if (id) {
+      return id;
+    } else {
+      console.warn('Failed to schedule payment reminder for lesson', lesson?.id);
+      return null;
+    }
+  } catch (err) {
+    console.error('Error scheduling payment reminder', err);
+    return null;
+  }
+}

@@ -67,20 +67,28 @@ export const exportLessonsToCSV = async (lessons, filename = 'lessons.csv') => {
  */
 export const exportStudentsToCSV = async (students, filename = 'students.csv') => {
   try {
-    // Create CSV header
-    const header = 'Όνομα,Επώνυμο,Έτος Γέννησης,Γονέας,Τηλέφωνο,Email,Μέγεθος Βιολιού,Προεπ. Διάρκεια,Προεπ. Τιμή,Σημειώσεις\n';
-    
     // Escape function for CSV
     function csvEscape(val) {
       if (val === undefined || val === null) return '';
       return `"${String(val).replace(/"/g, '""')}"`;
     }
 
+    const header = [
+      'onoma_mathiti',
+      'epitheto_mathiti',
+      'etos_gennisis',
+      'goneas_onoma_epitheto',
+      'kinhto_tilefono',
+      'email',
+      'megethos_violiou',
+      'default_diarkeia',
+      'default_timi',
+      'simiwseis'
+    ].map(csvEscape).join(',') + '\n';
+
     // Create CSV rows
     const rows = students.map(student => {
       const parentName = [(student.onoma_gonea || ''), (student.epitheto_gonea || '')].filter(Boolean).join(' ');
-      const notes = student.simiwseis || '';
-
       const values = [
         student.onoma_mathiti,
         student.epitheto_mathiti,
@@ -91,9 +99,8 @@ export const exportStudentsToCSV = async (students, filename = 'students.csv') =
         student.megethos_violiou,
         student.default_diarkeia,
         student.default_timi,
-        notes
+        student.simiwseis || ''
       ].map(csvEscape);
-
       return values.join(',');
     }).join('\n');
     
