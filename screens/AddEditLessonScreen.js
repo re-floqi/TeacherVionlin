@@ -202,7 +202,7 @@ export default function AddEditLessonScreen({ route, navigation }) {
               {students.map((student) => (
                 <Picker.Item
                   key={student.student_id}
-                  label={`${student.onoma_mathiti} ${student.epitheto_mathimati || ''}`}
+                  label={`${student.onoma_mathiti} ${student.epitheto_mathiti || ''}`}
                   value={student.student_id.toString()}
                 />
               ))}
