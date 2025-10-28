@@ -9,7 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { Calendar } from 'react-native-calendars';
-import { getLessonsByDateRange, signOut } from '../supabaseService';
+import { getLessonsByDateRange, getRecurringLessons, signOut } from '../supabaseService';
 import { useTheme } from '../ThemeContext';
 
 // Αρχική οθόνη: ημερολόγιο + λίστα μαθημάτων για την επιλεγμένη ημέρα.
@@ -43,19 +43,95 @@ export default function HomeScreen({ navigation, onLogout }) {
     const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
     // Κλήση προς backend για μαθήματα στο διάστημα
-    const result = await getLessonsByDateRange(
+    const lessonsResult = await getLessonsByDateRange(
       firstDay.toISOString(),
       lastDay.toISOString()
     );
 
-    if (result.success) {
-      // Αποθηκεύουμε τα μαθήματα και ενημερώνουμε τις επισημασμένες ημερομηνίες
-      setLessons(result.data);
-      markLessonDates(result.data);
+    // Κλήση προς backend για κανόνες επανάληψης
+    const recurringResult = await getRecurringLessons();
+
+    // Συνδυασμός μαθημάτων: κανονικά + παραγόμενα από κανόνες επανάληψης
+    const combinedLessons = await getCombinedLessons(
+      lessonsResult.success ? lessonsResult.data : [],
+      recurringResult.success ? recurringResult.data : [],
+      firstDay,
+      lastDay
+    );
+
+    if (lessonsResult.success || recurringResult.success) {
+      // Αποθηκεύουμε τα συνδυασμένα μαθήματα και ενημερώνουμε τις επισημασμένες ημερομηνίες
+      setLessons(combinedLessons);
+      markLessonDates(combinedLessons);
     } else {
       // Σε περίπτωση σφάλματος, μπορούμε να ειδοποιήσουμε (προς το παρόν σιωπηλό)
-      console.error('Failed to load lessons', result.error);
+      console.error('Failed to load lessons', lessonsResult.error || recurringResult.error);
     }
+  };
+
+  // Συνάρτηση που συνδυάζει κανονικά μαθήματα με παραγόμενα από κανόνες επανάληψης
+  const getCombinedLessons = async (regularLessons, recurringRules, startDate, endDate) => {
+    // Ξεκινάμε με τα κανονικά μαθήματα
+    const combined = [...regularLessons];
+    
+    // Για κάθε κανόνα επανάληψης, παράγουμε τα αντίστοιχα μαθήματα
+    for (const rule of recurringRules) {
+      const generatedLessons = generateLessonsFromRule(rule, startDate, endDate);
+      
+      // Προσθέτουμε τα παραγόμενα μαθήματα στη λίστα
+      combined.push(...generatedLessons);
+    }
+    
+    // Ταξινομούμε όλα τα μαθήματα χρονολογικά
+    return combined.sort((a, b) => 
+      new Date(a.imera_ora_enarksis) - new Date(b.imera_ora_enarksis)
+    );
+  };
+
+  // Παράγει μεμονωμένα μαθήματα από έναν κανόνα επανάληψης για το δοθέν διάστημα
+  const generateLessonsFromRule = (rule, startDate, endDate) => {
+    const lessons = [];
+    
+    // Μετατροπή ημερομηνιών σε Date objects
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const ruleStart = new Date(rule.enarxi_epanallipsis);
+    const ruleEnd = rule.lixi_epanallipsis ? new Date(rule.lixi_epanallipsis) : end;
+    
+    // Ξεκινάμε από τη μεγαλύτερη ημερομηνία (είτε το start του διαστήματος είτε το ruleStart)
+    let currentDate = new Date(Math.max(start.getTime(), ruleStart.getTime()));
+    
+    // Βρίσκουμε την πρώτη ημέρα που αντιστοιχεί στην ημέρα της εβδομάδας του κανόνα
+    while (currentDate.getDay() !== rule.imera_evdomadas && currentDate <= end) {
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    // Παράγουμε μαθήματα για κάθε εμφάνιση (κάθε εβδομάδα)
+    while (currentDate.getTime() <= Math.min(end.getTime(), ruleEnd.getTime())) {
+      // Δημιουργία ISO timestamp με την ώρα από τον κανόνα
+      const [hours, minutes] = rule.ora_enarksis.split(':');
+      const lessonDateTime = new Date(currentDate);
+      lessonDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      
+      // Δημιουργία αντικειμένου μαθήματος
+      lessons.push({
+        lesson_id: `recurring_${rule.recurring_id}_${lessonDateTime.getTime()}`, // Unique ID για UI
+        student_id: rule.student_id,
+        imera_ora_enarksis: lessonDateTime.toISOString(),
+        diarkeia_lepta: rule.diarkeia_lepta,
+        timi: rule.timi,
+        katastasi_pliromis: 'pending', // Προεπιλεγμένη κατάσταση
+        simiwseis_mathimatos: null,
+        students: rule.students, // Embedded relation από το backend
+        isGenerated: true, // Σημαία ότι είναι παραγόμενο μάθημα
+        recurring_id: rule.recurring_id, // Reference στον κανόνα επανάληψης
+      });
+      
+      // Πηγαίνουμε στην επόμενη εβδομάδα
+      currentDate.setDate(currentDate.getDate() + 7);
+    }
+    
+    return lessons;
   };
 
   // Σημαίνει στο calendar τις ημερομηνίες που υπάρχουν μαθήματα
