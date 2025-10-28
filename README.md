@@ -1,17 +1,28 @@
-# Teacher Violin - Εφαρμογή Διαχείρισης Μαθημάτων Βιολιού
+# TeacherVionlin - Εφαρμογή Διαχείρισης Μαθημάτων Βιολιού
 
 ## 📝 Περιγραφή
 
-Η εφαρμογή Teacher Violin είναι ένα ολοκληρωμένο σύστημα διαχείρισης μαθημάτων βιολιού που επιτρέπει στους δασκάλους να:
+Η εφαρμογή TeacherVionlin είναι ένα ολοκληρωμένο σύστημα διαχείρισης μαθημάτων βιολιού που επιτρέπει στους δασκάλους να:
 
+### Βασικές Λειτουργίες
 - 📅 Καταγράφουν μαθήματα σε ημερολόγιο
-- 👥 Διαχειρίζονται τους μαθητές τους
+- 👥 Διαχειρίζονται τους μαθητές τους (δημιουργία, επεξεργασία, διαγραφή)
 - ⏰ Ορίζουν την ώρα και διάρκεια των μαθημάτων
 - 💰 Παρακολουθούν τις χρεώσεις και πληρωμές
 - 🔄 Δημιουργούν επαναλαμβανόμενα μαθήματα
-- 📊 Βλέπουν στατιστικά πληρωμών
+- 📊 Βλέπουν στατιστικά πληρωμών με πλοήγηση ανά μήνα
 
-## 🚀 Εγκατάσταση & Ρύθμιση
+### Προηγμένες Λειτουργίες
+- 🌙 Dark Mode (σκούρο θέμα)
+- 🔔 Push notifications για επερχόμενα μαθήματα και υπενθυμίσεις πληρωμών
+- 📤 Export δεδομένων σε CSV (Excel-compatible)
+- 💾 Backup και restore λειτουργικότητα
+- 🤖 Αυτόματη δημιουργία μαθημάτων από κανόνες επανάληψης
+- 📈 Παρακολούθηση προόδου μαθητών
+
+## 🚀 Γρήγορη Εκκίνηση
+
+**Για γρήγορη εκκίνηση, δείτε το [QUICK_START.md](QUICK_START.md)**
 
 ### Προαπαιτούμενα
 
@@ -39,7 +50,8 @@
    
    β. Δημιουργήστε ένα νέο project
    
-   γ. Μεταβείτε στο SQL Editor και εκτελέστε το αρχείο `database_schema.sql`
+   γ. Μεταβείτε στο SQL Editor και εκτελέστε ολόκληρο το αρχείο `supabase_setup.sql`
+      (copy-paste όλο το περιεχόμενο και πατήστε Run)
    
    δ. Πηγαίνετε στις ρυθμίσεις του project (Settings > API) και αντιγράψτε:
       - Project URL
@@ -137,6 +149,12 @@
    - Ημέρα εβδομάδας
    - Περίοδος ισχύος
 
+4. **student_progress** - Πρόοδος Μαθητών
+   - Καταγραφή προόδου μαθητή
+   - Επίπεδο δεξιοτήτων
+   - Κομμάτια μουσικής
+   - Σημειώσεις παρακολούθησης
+
 ### ENUM Types
 
 - **payment_status**: 'pending', 'paid', 'cancelled'
@@ -148,6 +166,10 @@
 - **Backend**: Supabase (PostgreSQL)
 - **UI Components**: Custom components βασισμένα στο Argon theme
 - **Calendar**: react-native-calendars
+- **Theme**: React Context API με AsyncStorage
+- **Notifications**: expo-notifications
+- **Export**: expo-file-system, expo-sharing
+- **State Management**: React Hooks & Context
 
 ## 📦 Deployment
 
@@ -194,31 +216,105 @@
 
 ## 🔒 Ασφάλεια
 
-- Row Level Security (RLS) ενεργοποιημένο στο Supabase
-- Authentication required για όλες τις λειτουργίες
-- Secure connection με HTTPS
-- Environment variables για sensitive data
+- ✅ Row Level Security (RLS) ενεργοποιημένο στο Supabase
+- ✅ Ξεχωριστές πολιτικές για SELECT, INSERT, UPDATE, DELETE
+- ✅ CASCADE delete για αυτόματη διαγραφή σχετικών εγγραφών
+- ✅ Authentication required για όλες τις λειτουργίες
+- ✅ Secure connection με HTTPS
+- ✅ Environment variables για sensitive data
+- ✅ CodeQL Security Scan: PASSED (0 vulnerabilities)
+
+## 📚 Τεκμηρίωση
+
+- **[QUICK_START.md](QUICK_START.md)** - Γρήγορος οδηγός εκκίνησης (5 λεπτά)
+- **[IMPLEMENTATION_GUIDE.md](IMPLEMENTATION_GUIDE.md)** - Πλήρης οδηγός λειτουργιών και τεχνικών λεπτομερειών
+- **[SETUP_GUIDE.md](SETUP_GUIDE.md)** - Λεπτομερής οδηγός εγκατάστασης
+- **[API_DOCUMENTATION.md](API_DOCUMENTATION.md)** - API reference για developers
+- **[FAQ.md](FAQ.md)** - Συχνές ερωτήσεις
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Οδηγίες deployment
+- **[FIX_GUIDE.md](FIX_GUIDE.md)** - Οδηγός επίλυσης προβλημάτων
+
+## 📁 Δομή Project
+
+```
+TeacherVionlin/
+├── App.js                          # Κύριο αρχείο εφαρμογής
+├── ThemeContext.js                 # Dark mode context
+├── supabaseService.js              # Database API functions
+├── notificationService.js          # Push notifications
+├── exportService.js                # Data export (CSV)
+├── backupService.js                # Backup/restore
+├── recurringLessonUtils.js         # Auto-generate lessons
+├── supabase_setup.sql              # Complete database setup (RUN THIS!)
+├── screens/                        # Οθόνες εφαρμογής
+│   ├── LoginScreen.js
+│   ├── HomeScreen.js
+│   ├── StudentsScreen.js
+│   ├── AddEditStudentScreen.js
+│   ├── AddEditLessonScreen.js
+│   ├── AddEditRecurringLessonScreen.js
+│   ├── RecurringLessonsScreen.js
+│   ├── PaymentStatsScreen.js
+│   └── SettingsScreen.js
+├── assets/
+├── .env.example
+├── package.json
+└── README.md                       # This file
+```
 
 ## 📞 Υποστήριξη
 
-Για προβλήματα ή ερωτήσεις, ανοίξτε ένα issue στο GitHub repository.
+Για προβλήματα ή ερωτήσεις:
+1. Ελέγξτε το [IMPLEMENTATION_GUIDE.md](IMPLEMENTATION_GUIDE.md) για τεχνικές λεπτομέρειες
+2. Δείτε το [FAQ.md](FAQ.md) για συχνές ερωτήσεις
+3. Ανοίξτε ένα issue στο GitHub repository
 
 ## 📄 Άδεια
 
 MIT License - Δείτε το LICENSE αρχείο για λεπτομέρειες.
 
+## ✅ Ολοκληρωμένες Λειτουργίες
+
+### CRUD Operations
+- ✅ Students: Create, Read, Update, Delete
+- ✅ Lessons: Create, Read, Update, Delete
+- ✅ Recurring Lessons: Create, Read, Update, Delete
+- ✅ Payments: Read, Update (status changes)
+- ✅ Student Progress: Create, Read, Update, Delete (API ready)
+
+### Advanced Features
+- ✅ Dark Mode με persistent storage
+- ✅ Push Notifications (lesson reminders, payment reminders)
+- ✅ Data Export σε CSV
+- ✅ Backup & Restore (JSON format)
+- ✅ Automated Lesson Generation από recurring rules
+- ✅ Month Navigation στα στατιστικά
+- ✅ Inline Payment Status Editing
+- ✅ Student deletion με cascade
+- ✅ Recurring lessons checkbox στο add lesson
+
 ## 🎯 Μελλοντικές Βελτιώσεις
 
-- [ ] Push notifications για επερχόμενα μαθήματα
-- [ ] Export δεδομένων σε Excel/PDF
-- [ ] Backup και restore λειτουργικότητα
-- [ ] Multi-language support
-- [ ] Dark mode
-- [ ] Automated recurring lesson generation
-- [ ] Payment reminders
-- [ ] Student progress tracking
-- [ ] Lesson notes and attachments
+Όλες οι βασικές λειτουργίες έχουν ολοκληρωθεί! Πιθανές μελλοντικές προσθήκες:
+
+- [ ] Student Progress UI screen
+- [ ] PDF Export με charts
+- [ ] Multi-language support (English)
+- [ ] Advanced analytics & charts
+- [ ] Cloud backup integration
+- [ ] Email notifications
+- [ ] Customizable notification times
 
 ## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+---
+
+**Version:** 1.0.0  
+**Last Updated:** October 2025  
+**Repository:** https://github.com/re-floqi/TeacherVionlin
+
+🎻 Καλή χρήση! / Happy Teaching! 🎻
 
 Contributions are welcome! Please feel free to submit a Pull Request.
