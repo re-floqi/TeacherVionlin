@@ -233,6 +233,7 @@
 - **[FAQ.md](FAQ.md)** - Συχνές ερωτήσεις
 - **[DEPLOYMENT.md](DEPLOYMENT.md)** - Οδηγίες deployment
 - **[FIX_GUIDE.md](FIX_GUIDE.md)** - Οδηγός επίλυσης προβλημάτων
+- **[MANUAL_TEST_PLAN.md](MANUAL_TEST_PLAN.md)** - Σχέδιο χειροκίνητου ελέγχου (Manual Test Plan)
 
 ## 📁 Δομή Project
 
