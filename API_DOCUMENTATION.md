@@ -448,6 +448,96 @@ const result = await generateLessonsFromRecurring(
 console.log(`Δημιουργήθηκαν ${result.count} μαθήματα`);
 ```
 
+## Student Progress Functions
+
+### getStudentProgress(studentId)
+Φέρνει όλες τις καταχωρήσεις προόδου για έναν μαθητή.
+
+**Παράμετροι:**
+- `studentId` (number): ID του μαθητή
+
+**Επιστρέφει:**
+```javascript
+{
+  success: true,
+  data: [
+    {
+      progress_id: 1,
+      student_id: 1,
+      imera_kataxorisis: '2024-01-20T10:00:00Z',
+      perigrafi: 'Learned new technique',
+      skill_level: 4,
+      kommati_mousikis: 'Vivaldi - Spring',
+      simiwseis: 'Great improvement',
+      created_by: 'Teacher Name'
+    },
+    ...
+  ]
+}
+```
+
+### addStudentProgress(progressData)
+Προσθέτει νέα καταχώρηση προόδου για μαθητή.
+
+**Παράμετροι:**
+- `progressData` (object): Δεδομένα προόδου
+  - `student_id` (number, required)
+  - `perigrafi` (string, required): Περιγραφή προόδου
+  - `skill_level` (number, optional): Επίπεδο δεξιοτήτων (1-5)
+  - `kommati_mousikis` (string, optional): Κομμάτι μουσικής
+  - `simiwseis` (string, optional): Σημειώσεις
+  - `created_by` (string, optional): Όνομα δασκάλου
+
+**Επιστρέφει:**
+```javascript
+{
+  success: true,
+  data: { progress_id: 1, ... }
+}
+```
+
+**Παράδειγμα:**
+```javascript
+const result = await addStudentProgress({
+  student_id: 1,
+  perigrafi: 'Mastered vibrato technique',
+  skill_level: 4,
+  kommati_mousikis: 'Bach - Partita No.2',
+  simiwseis: 'Excellent progress this week',
+  created_by: 'Maria Papadopoulou'
+});
+```
+
+### updateStudentProgress(progressId, progressData)
+Ενημερώνει υπάρχουσα καταχώρηση προόδου.
+
+**Παράμετροι:**
+- `progressId` (number): ID της καταχώρησης προόδου
+- `progressData` (object): Δεδομένα για ενημέρωση (ίδια με addStudentProgress)
+
+**Επιστρέφει:**
+```javascript
+{
+  success: true,
+  data: { progress_id: 1, ... }
+}
+```
+
+### deleteStudentProgress(progressId)
+Διαγράφει μια καταχώρηση προόδου.
+
+**Παράμετροι:**
+- `progressId` (number): ID της καταχώρησης προόδου
+
+**Επιστρέφει:**
+```javascript
+{
+  success: true
+}
+```
+
+---
+
 ## Error Handling
 
 Όλες οι συναρτήσεις χειρίζονται errors και επιστρέφουν:
