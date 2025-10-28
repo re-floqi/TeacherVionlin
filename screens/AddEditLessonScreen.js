@@ -34,6 +34,7 @@ export default function AddEditLessonScreen({ route, navigation }) {
     timi: '',
     katastasi_pliromis: 'pending',
     simiwseis_mathimatos: '',
+    endDate: '', // Ημερομηνία λήξης για επαναλαμβανόμενα μαθήματα (υποχρεωτικό)
   });
 
   // useEffect για αρχικό φόρτωμα μαθητών και γέμισμα φόρμας αν επεξεργαζόμαστε
@@ -100,44 +101,48 @@ export default function AddEditLessonScreen({ route, navigation }) {
       return;
     }
 
+    // Αν είναι επαναλαμβανόμενο μάθημα, το endDate είναι ΑΠΟΛΥΤΩΣ ΥΠΟΧΡΕΩΤΙΚΟ
+    if (isRecurring && !formData.endDate) {
+      Alert.alert('Σφάλμα', 'Πρέπει να ορίσετε ημερομηνία λήξης για την επανάληψη');
+      return;
+    }
+
     // Δημιουργία ISO ημερομηνίας+ώρας για αποθήκευση (προσθέτουμε :00 για δευτερόλεπτα)
     const dateTime = new Date(`${formData.date}T${formData.time}:00`);
     
-    // Προετοιμασία αντικειμένου για αποστολή στο backend
-    const dataToSave = {
-      student_id: parseInt(formData.student_id),
-      imera_ora_enarksis: dateTime.toISOString(),
-      diarkeia_lepta: parseInt(formData.diarkeia_lepta),
-      timi: parseFloat(formData.timi),
-      katastasi_pliromis: formData.katastasi_pliromis,
-      simiwseis_mathimatos: formData.simiwseis_mathimatos || null,
-    };
-
     let result;
-    if (isEditing) {
-      // Ενημέρωση υπάρχοντος μαθήματος με το lesson.lesson_id
-      result = await updateLesson(lesson.lesson_id, dataToSave);
-    } else {
-      // Προσθήκη νέου μαθήματος
-      result = await addLesson(dataToSave);
+    
+    // Αν είναι επαναλαμβανόμενο μάθημα, αποθηκεύουμε ΜΟΝΟ στον πίνακα recurring_lessons
+    if (isRecurring && !isEditing) {
+      // Προετοιμασία δεδομένων για κανόνα επανάληψης
+      const recurringData = {
+        student_id: parseInt(formData.student_id),
+        imera_evdomadas: dateTime.getDay(), // Ημέρα εβδομάδας (0-6)
+        ora_enarksis: formData.time,
+        diarkeia_lepta: parseInt(formData.diarkeia_lepta),
+        timi: parseFloat(formData.timi),
+        enarxi_epanallipsis: formData.date,
+        lixi_epanallipsis: formData.endDate, // Υποχρεωτική ημερομηνία λήξης
+      };
       
-      // Αν ενεργοποιήθηκε η επιλογή επανάληψης, δημιουργούμε κανόνα επανάληψης μετά την επιτυχία της προσθήκης
-      if (result.success && isRecurring) {
-        const recurringData = {
-          student_id: parseInt(formData.student_id),
-          imera_evdomadas: dateTime.getDay(), // Ημέρα εβδομάδας (0-6)
-          ora_enarksis: formData.time,
-          diarkeia_lepta: parseInt(formData.diarkeia_lepta),
-          timi: parseFloat(formData.timi),
-          enarxi_epanallipsis: formData.date,
-          lixi_epanallipsis: null, // Χωρίς ημερομηνία λήξης
-        };
-        
-        const recurringResult = await addRecurringLesson(recurringData);
-        if (!recurringResult.success) {
-          // Προειδοποίηση αν αποτύχει η δημιουργία κανόνα επανάληψης
-          Alert.alert('Προειδοποίηση', 'Το μάθημα δημιουργήθηκε αλλά ο κανόνας επανάληψης απέτυχε');
-        }
+      result = await addRecurringLesson(recurringData);
+    } else {
+      // Προετοιμασία αντικειμένου για αποστολή στο backend (μεμονωμένο μάθημα)
+      const dataToSave = {
+        student_id: parseInt(formData.student_id),
+        imera_ora_enarksis: dateTime.toISOString(),
+        diarkeia_lepta: parseInt(formData.diarkeia_lepta),
+        timi: parseFloat(formData.timi),
+        katastasi_pliromis: formData.katastasi_pliromis,
+        simiwseis_mathimatos: formData.simiwseis_mathimatos || null,
+      };
+
+      if (isEditing) {
+        // Ενημέρωση υπάρχοντος μαθήματος με το lesson.lesson_id
+        result = await updateLesson(lesson.lesson_id, dataToSave);
+      } else {
+        // Προσθήκη νέου μαθήματος
+        result = await addLesson(dataToSave);
       }
     }
 
@@ -145,7 +150,11 @@ export default function AddEditLessonScreen({ route, navigation }) {
     if (result.success) {
       Alert.alert(
         'Επιτυχία',
-        isEditing ? 'Το μάθημα ενημερώθηκε' : isRecurring ? 'Το μάθημα και ο κανόνας επανάληψης προστέθηκαν' : 'Το μάθημα προστέθηκε',
+        isRecurring && !isEditing
+          ? 'Ο κανόνας επανάληψης προστέθηκε επιτυχώς'
+          : isEditing
+          ? 'Το μάθημα ενημερώθηκε επιτυχώς'
+          : 'Το μάθημα προστέθηκε επιτυχώς',
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
     } else {
@@ -267,15 +276,32 @@ export default function AddEditLessonScreen({ route, navigation }) {
           />
 
           {!isEditing && (
-            <View style={styles.switchContainer}>
-              <Text style={styles.label}>Επαναλαμβανόμενο μάθημα (κάθε εβδομάδα)</Text>
-              <Switch
-                value={isRecurring}
-                onValueChange={setIsRecurring}
-                trackColor={{ false: '#ccc', true: '#5e72e4' }}
-                thumbColor={isRecurring ? '#fff' : '#f4f3f4'}
-              />
-            </View>
+            <>
+              <View style={styles.switchContainer}>
+                <Text style={styles.label}>Επαναλαμβανόμενο μάθημα (κάθε εβδομάδα)</Text>
+                <Switch
+                  value={isRecurring}
+                  onValueChange={setIsRecurring}
+                  trackColor={{ false: '#ccc', true: '#5e72e4' }}
+                  thumbColor={isRecurring ? '#fff' : '#f4f3f4'}
+                />
+              </View>
+
+              {isRecurring && (
+                <>
+                  <Text style={styles.label}>Ημερομηνία Λήξης Επανάληψης *</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={formData.endDate}
+                    onChangeText={(value) => updateField('endDate', value)}
+                    placeholder="YYYY-MM-DD (υποχρεωτικό)"
+                  />
+                  <Text style={styles.helperText}>
+                    Η ημερομηνία λήξης είναι υποχρεωτική για επαναλαμβανόμενα μαθήματα
+                  </Text>
+                </>
+              )}
+            </>
           )}
 
           <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
@@ -370,5 +396,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  helperText: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 4,
+    fontStyle: 'italic',
   },
 });

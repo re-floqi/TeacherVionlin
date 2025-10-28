@@ -147,6 +147,7 @@ CREATE OR REPLACE FUNCTION delete_student_with_cascade(student_id_param INTEGER)
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = 'public'
 AS $$
 BEGIN
     -- Delete student (CASCADE will handle related records)
