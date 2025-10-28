@@ -205,6 +205,27 @@ export default function HomeScreen({ navigation, onLogout }) {
     }
   };
 
+  // Χειρισμός κλικ σε μάθημα
+  const handleLessonPress = (lesson) => {
+    // Αν είναι παραγόμενο μάθημα από κανόνα επανάληψης, εμφάνιση πληροφοριών
+    if (lesson.isGenerated) {
+      Alert.alert(
+        'Επαναλαμβανόμενο Μάθημα',
+        'Αυτό το μάθημα δημιουργήθηκε αυτόματα από κανόνα επανάληψης.\n\nΓια επεξεργασία, πηγαίνετε στην οθόνη "Επαναλαμβανόμενα Μαθήματα".',
+        [
+          { text: 'OK', style: 'cancel' },
+          { 
+            text: 'Προβολή Κανόνων', 
+            onPress: () => navigation.navigate('RecurringLessons') 
+          },
+        ]
+      );
+    } else {
+      // Κανονικό μάθημα - επεξεργασία
+      navigation.navigate('AddEditLesson', { lesson });
+    }
+  };
+
   // Χειρισμός αποσύνδεσης: εμφάνιση επιβεβαίωσης και κλήση signOut
   const handleLogout = async () => {
     Alert.alert(
@@ -327,12 +348,13 @@ export default function HomeScreen({ navigation, onLogout }) {
               <TouchableOpacity
                 key={lesson.lesson_id}
                 style={[styles.lessonCard, { backgroundColor: theme.colors.card }]}
-                // Tap: επεξεργασία/προβολή μαθήματος
-                onPress={() => navigation.navigate('AddEditLesson', { lesson })}
+                // Tap: επεξεργασία/προβολή μαθήματος (ή πληροφορίες αν είναι παραγόμενο)
+                onPress={() => handleLessonPress(lesson)}
               >
                 <View style={styles.lessonHeader}>
                   <Text style={[styles.lessonTime, { color: theme.colors.text }]}>
                     {formatTime(lesson.imera_ora_enarksis)}
+                    {lesson.isGenerated && <Text style={styles.recurringIndicator}> 🔄</Text>}
                   </Text>
                   <View style={[styles.paymentBadge, { backgroundColor: getPaymentStatusColor(lesson.katastasi_pliromis) }]}>
                     <Text style={styles.paymentBadgeText}>{getPaymentStatusText(lesson.katastasi_pliromis)}</Text>
@@ -455,6 +477,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
+  },
+  recurringIndicator: {
+    fontSize: 14,
+    color: '#5e72e4',
   },
   paymentBadge: {
     paddingHorizontal: 12,
