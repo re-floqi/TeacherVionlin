@@ -30,8 +30,14 @@ npm install -g expo-cli
 ### Εκτέλεση SQL Schema
 1. Στο Supabase Dashboard, πηγαίνετε στο "SQL Editor"
 2. Πατήστε "+ New Query"
-3. Αντιγράψτε και επικολλήστε όλο το περιεχόμενο του αρχείου `database_schema.sql`
+3. Αντιγράψτε και επικολλήστε όλο το περιεχόμενο του αρχείου `supabase_setup.sql`
 4. Πατήστε "Run" για να εκτελέσετε το script
+
+**Σημαντικό:** Το `supabase_setup.sql` περιλαμβάνει:
+- Πλήρη δομή βάσης δεδομένων (tables, policies, constraints)
+- Row Level Security (RLS) policies για ασφάλεια
+- Indexes για καλύτερη απόδοση
+- CASCADE constraints για αυτόματη διαχείριση διαγραφών
 
 ### Λήψη API Keys
 1. Πηγαίνετε στο "Settings" > "API"
