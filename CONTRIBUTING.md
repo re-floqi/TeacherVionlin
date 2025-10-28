@@ -285,25 +285,28 @@ Before submitting a PR:
 We especially welcome contributions in:
 
 ### High Priority
-- [ ] Push notifications for lessons
-- [ ] Data export (Excel/PDF)
-- [ ] Backup/restore functionality
-- [ ] Dark mode support
-- [ ] Unit tests
+- [ ] Student Progress UI screen (API already implemented)
+- [ ] PDF Export with charts and formatted reports
+- [ ] Multi-language support (i18n - English and other languages)
+- [ ] Unit tests and integration tests
+- [ ] E2E tests (Detox)
 
 ### Medium Priority
-- [ ] Multi-language support (i18n)
-- [ ] Student progress tracking
-- [ ] Lesson notes with attachments
-- [ ] Payment reminders
-- [ ] Custom recurring patterns
+- [ ] Advanced analytics with interactive charts and graphs
+- [ ] Cloud backup integration (Google Drive, Dropbox, etc.)
+- [ ] Email notifications for lessons and payments
+- [ ] Customizable notification times per student
+- [ ] Custom recurring patterns (bi-weekly, monthly, etc.)
+- [ ] Lesson attachments (photos, documents, audio recordings)
 
 ### Low Priority
-- [ ] Statistics charts/graphs
-- [ ] Calendar sync (Google, Apple)
+- [ ] Calendar sync (Google Calendar, Apple Calendar)
 - [ ] SMS notifications
-- [ ] Multi-user with separate data
-- [ ] Offline mode
+- [ ] Multi-tenant support with separate data per teacher
+- [ ] Offline mode with background sync
+- [ ] Video call integration for remote lessons
+- [ ] Student practice tracking
+- [ ] Repertoire management
 
 ## 🤔 Questions?
 
