@@ -52,7 +52,7 @@ export default function HomeScreen({ navigation, onLogout }) {
     const recurringResult = await getRecurringLessons();
 
     // Συνδυασμός μαθημάτων: κανονικά + παραγόμενα από κανόνες επανάληψης
-    const combinedLessons = await getCombinedLessons(
+    const combinedLessons = getCombinedLessons(
       lessonsResult.success ? lessonsResult.data : [],
       recurringResult.success ? recurringResult.data : [],
       firstDay,
@@ -70,7 +70,7 @@ export default function HomeScreen({ navigation, onLogout }) {
   };
 
   // Συνάρτηση που συνδυάζει κανονικά μαθήματα με παραγόμενα από κανόνες επανάληψης
-  const getCombinedLessons = async (regularLessons, recurringRules, startDate, endDate) => {
+  const getCombinedLessons = (regularLessons, recurringRules, startDate, endDate) => {
     // Ξεκινάμε με τα κανονικά μαθήματα
     const combined = [...regularLessons];
     
