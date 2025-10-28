@@ -314,7 +314,3 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 **Version:** 1.0.0  
 **Last Updated:** October 2025  
 **Repository:** https://github.com/re-floqi/TeacherVionlin
-
-🎻 Καλή χρήση! / Happy Teaching! 🎻
-
-Contributions are welcome! Please feel free to submit a Pull Request.
